@@ -1,3 +1,6 @@
+package Presentation;
+
+import Service.PeerCreator;
 import net.tomp2p.dht.PeerDHT;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
@@ -21,7 +24,7 @@ public class Bootstrap {
             @Override
             public Object reply(PeerAddress sender, Object request) throws Exception {
                 receiveMessage(request);
-                return "This is a reply";
+                return "This is the sound of da police";
             }
         });
     }
