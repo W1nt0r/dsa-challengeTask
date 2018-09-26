@@ -1,6 +1,16 @@
 package DomainObjects;
 
-public class Contact {
+import java.io.Serializable;
+
+public class Contact implements Serializable {
+
+    private String name;
+    private State state;
+
+    public Contact(String name, State state) {
+        this.name = name;
+        this.state = state;
+    }
 
     public String getName() {
         return name;
@@ -10,8 +20,6 @@ public class Contact {
         this.name = name;
     }
 
-    private String name;
-
     public State getState() {
         return state;
     }
@@ -19,6 +27,4 @@ public class Contact {
     public void setState(State state) {
         this.state = state;
     }
-
-    private State state;
 }

@@ -1,6 +1,18 @@
 package DomainObjects;
 
-public class State {
+import java.io.Serializable;
+
+public class State implements Serializable {
+
+    private String ip;
+    private int port;
+    private boolean online;
+
+    public State(String ip, int port, boolean online) {
+        this.ip = ip;
+        this.port = port;
+        this.online = online;
+    }
 
     public String getIp() {
         return ip;
@@ -25,8 +37,4 @@ public class State {
     public void setOnline(boolean online) {
         this.online = online;
     }
-
-    private String ip;
-    private int port;
-    private boolean online;
 }

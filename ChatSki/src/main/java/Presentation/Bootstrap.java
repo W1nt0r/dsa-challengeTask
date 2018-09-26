@@ -2,43 +2,28 @@ package Presentation;
 
 import Service.PeerCreator;
 import net.tomp2p.dht.PeerDHT;
+import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.peers.Number160;
-import net.tomp2p.peers.PeerAddress;
-import net.tomp2p.rpc.ObjectDataReply;
 import net.tomp2p.storage.Data;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class Bootstrap {
 
-    private PeerDHT peer;
+    private final static String BOOTSTRAP_ID = "BOOTSTRAP_PEER_ID";
+    private final static int BOOTSTRAP_PORT = 4000;
+    private final static String BOOTSTRAP_IP = "127.0.0.1";
 
-    public final static Number160 FILE_HASH = Number160.createHash("FIRST_FILE");
-
-    public final static String BOOTSTRAP_ID = "BOOTSTRAP_PEER_ID";
-    public final static int BOOTSTRAP_PORT = 4000;
-
-    public Bootstrap() throws IOException {
-        peer = PeerCreator.CreatePeer(BOOTSTRAP_ID, BOOTSTRAP_PORT);
-        peer.peer().objectDataReply(new ObjectDataReply() {
-            @Override
-            public Object reply(PeerAddress sender, Object request) throws Exception {
-                receiveMessage(request);
-                return "This is the sound of da police";
-            }
-        });
-    }
-
-    public PeerDHT getBootstrapPeer() {
-        return peer;
-    }
-
-    private void receiveMessage(Object data) {
-        System.out.println(data.toString());
+    public static boolean bootstrap(PeerDHT peer) throws UnknownHostException {
+        FutureBootstrap fb = peer.peer().bootstrap().inetAddress(InetAddress.getByName(Bootstrap.BOOTSTRAP_IP)).ports(Bootstrap.BOOTSTRAP_PORT).start();
+        fb.awaitUninterruptibly();
+        return fb.isSuccess();
     }
 
     public static void main(String[] args) throws IOException {
-        Bootstrap bootstrap = new Bootstrap();
-        bootstrap.getBootstrapPeer().put(Number160.createHash("this is a test")).data(new Data("Hello, world!")).start().awaitUninterruptibly();
+        PeerDHT peer = PeerCreator.CreatePeer(BOOTSTRAP_ID, BOOTSTRAP_PORT);
+        System.out.println(peer.put(Number160.createHash("TestFile")).data(new Data("Hello, world")).start().awaitUninterruptibly().isSuccess());
     }
 }
