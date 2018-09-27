@@ -1,6 +1,5 @@
-package Presentation;
+package Service;
 
-import Service.PeerCreator;
 import net.tomp2p.dht.PeerDHT;
 import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.peers.Number160;

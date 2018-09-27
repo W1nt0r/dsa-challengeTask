@@ -4,7 +4,7 @@ import DomainObjects.Contact;
 import DomainObjects.Message;
 import DomainObjects.MessageConfirmation;
 import DomainObjects.State;
-import net.tomp2p.dht.PeerDHT;
+import Service.Exceptions.PeerNotInitializedException;
 import net.tomp2p.futures.FutureDirect;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
@@ -16,14 +16,10 @@ import java.net.UnknownHostException;
 public class PeerCommunicator {
 
     private final IMessageListener messageListener;
-    private final PeerDHT ownPeer;
-    private final Contact ownContact;
 
-    public PeerCommunicator(IMessageListener messageListener, PeerDHT ownPeer, Contact ownContact) {
+    public PeerCommunicator(IMessageListener messageListener) {
         this.messageListener = messageListener;
-        this.ownPeer = ownPeer;
-        this.ownContact = ownContact;
-        ownPeer.peer().objectDataReply(this::receiveMessage);
+        PeerHolder.getOwnPeer().peer().objectDataReply(this::receiveMessage);
     }
 
     private static PeerAddress getPeerAddress(Contact contact) throws UnknownHostException {
@@ -38,10 +34,13 @@ public class PeerCommunicator {
         return new MessageConfirmation();
     }
 
-    public boolean sendMessage(Contact receiver, String message) throws UnknownHostException {
+    public boolean sendMessage(Contact receiver, Message message) throws UnknownHostException, PeerNotInitializedException {
+        if (PeerHolder.getOwnPeer() == null) {
+            throw new PeerNotInitializedException();
+        }
+
         PeerAddress address = getPeerAddress(receiver);
-        Message msg = new Message(ownContact, message);
-        FutureDirect future = ownPeer.peer().sendDirect(address).object(msg).start();
+        FutureDirect future = PeerHolder.getOwnPeer().peer().sendDirect(address).object(message).start();
         future.awaitUninterruptibly();
         return future.isSuccess();
     }
