@@ -5,17 +5,16 @@ import DomainObjects.Interfaces.IMessageListener;
 
 import java.io.Serializable;
 
-public class Message implements Serializable, ITransmittable {
-    private final Contact sender;
-    private final String message;
+public class ContactRequest implements Serializable, ITransmittable {
 
-    public Message(Contact sender, String message) {
+    private final Contact sender;
+
+    public ContactRequest(Contact sender) {
         this.sender = sender;
-        this.message = message;
     }
 
     @Override
     public void handleReception(IMessageListener listener) {
-        listener.receiveMessage(sender, message);
+        listener.receiveContactRequest(sender);
     }
 }

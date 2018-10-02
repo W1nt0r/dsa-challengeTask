@@ -1,7 +1,7 @@
 package Presentation;
 
 import DomainObjects.Contact;
-import Service.IMessageListener;
+import DomainObjects.Interfaces.IMessageListener;
 
 public class ChatWindowMessageListener implements IMessageListener {
 
@@ -14,5 +14,15 @@ public class ChatWindowMessageListener implements IMessageListener {
     @Override
     public void receiveMessage(Contact sender, String message) {
         chatWindow.printReceivedMessage(sender.getName() + ": " + message);
+    }
+
+    @Override
+    public void receiveContactRequest(Contact sender) {
+
+    }
+
+    @Override
+    public void receiveContactResponse(Contact sender, boolean accepted) {
+
     }
 }

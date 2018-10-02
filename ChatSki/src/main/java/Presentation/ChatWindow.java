@@ -1,12 +1,12 @@
 package Presentation;
 
 import DomainObjects.BootstrapInformation;
+import DomainObjects.Interfaces.IMessageListener;
 import Domainlogic.ContactManager;
 import Domainlogic.Exceptions.NetworkJoinException;
 import Domainlogic.Exceptions.PeerCreateException;
 import Domainlogic.MessageManager;
 import Domainlogic.PeerManager;
-import Service.IMessageListener;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
