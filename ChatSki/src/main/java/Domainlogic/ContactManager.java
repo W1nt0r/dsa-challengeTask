@@ -14,6 +14,11 @@ public class ContactManager {
     private final String CONTACT_LIST_FILE = "ContactList.ser";
 
     private Contact ownContact;
+
+    public HashMap<String, Contact> getContactList() {
+        return contactList;
+    }
+
     private HashMap<String, Contact> contactList;
 
     public ContactManager() throws DataSaveException {
