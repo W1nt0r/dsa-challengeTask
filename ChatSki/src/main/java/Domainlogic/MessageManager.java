@@ -16,42 +16,25 @@ public class MessageManager {
 
     private final IMessageListener messageListener;
     private final PeerCommunicator communicator;
-    private Contact me = KnownContacts.getMe();
-    private Contact you = KnownContacts.getYou();
+    private final ContactManager contactManager;
 
-    public MessageManager(IMessageListener messageListener) throws NetworkJoinException {
+    public MessageManager(IMessageListener messageListener, ContactManager contactManager) {
         this.messageListener = messageListener;
+        this.contactManager = contactManager;
         communicator = new PeerCommunicator(messageListener);
     }
 
-    public void sendMessage(String receiverName, String message) throws NotInContactListException, SendFailedException, PeerNotInitializedException {
-        if (!isContact(receiverName)) {
+    public boolean sendMessage(String receiverName, String message) throws NotInContactListException, SendFailedException, PeerNotInitializedException {
+        if (!contactManager.isContact(receiverName)) {
             throw new NotInContactListException();
         }
-        Contact receiver = getContact(receiverName);
-        Message msg = new Message(me, message);
+        Contact receiver = contactManager.getContact(receiverName);
+        Message msg = new Message(contactManager.getOwnContact(), message);
 
         try {
-            communicator.sendMessage(receiver, msg);
+            return communicator.sendMessage(receiver, msg);
         } catch (UnknownHostException e) {
             throw new SendFailedException();
         }
-    }
-
-    private Contact getContact(String receiverName) {
-        return you;
-    }
-
-    private boolean isContact(String receiverName) {
-        return true;
-    }
-
-    //nur für Prototyp-Phase
-    public void setMe(Contact me) {
-        this.me = me;
-    }
-
-    public void setYou(Contact you) {
-        this.you = you;
     }
 }

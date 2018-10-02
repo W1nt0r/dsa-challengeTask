@@ -8,6 +8,8 @@ public class State implements Serializable {
     private int port;
     private boolean online;
 
+    public final static State EMPTY_STATE = new State(null, 0, false);
+
     public State(String ip, int port, boolean online) {
         this.ip = ip;
         this.port = port;

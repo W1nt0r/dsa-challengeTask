@@ -1,8 +1,11 @@
 package Presentation;
 
+import DomainObjects.BootstrapInformation;
 import DomainObjects.Contact;
+import Domainlogic.ContactManager;
 import Domainlogic.Exceptions.NetworkJoinException;
 import Domainlogic.Exceptions.NotInContactListException;
+import Domainlogic.Exceptions.PeerCreateException;
 import Domainlogic.Exceptions.SendFailedException;
 import Domainlogic.MessageManager;
 import Domainlogic.PeerManager;
@@ -13,21 +16,22 @@ import java.io.IOException;
 
 public class Peer2 implements IMessageListener {
 
-    public static void main(String[] args) throws IOException, NetworkJoinException, SendFailedException, PeerNotInitializedException, NotInContactListException {
-//        Contact ownContact = KnownContacts.contacts[1];
-//
-//        PeerDHT peer = PeerCreator.CreatePeer(ownContact.getName(), ownContact.getState().getPort());
-//        Bootstrap.bootstrap(peer);
-//
-//        IMessageListener messageListener = new Peer2();
-//        PeerCommunicator communicator = new PeerCommunicator(messageListener, peer, ownContact);
-//
-//        communicator.sendMessage(KnownContacts.contacts[0], "Hi");
+    public static void main(String[] args) throws NetworkJoinException, PeerCreateException, SendFailedException, PeerNotInitializedException, NotInContactListException {
         Contact ownContact = KnownContacts.contacts[1];
+        ContactManager cm = new ContactManager(ownContact, KnownContacts.getContactList());
         PeerManager.initializePeer(ownContact.getName(), ownContact.getState().getPort());
-        IMessageListener messageListener = new Peer2();
-        MessageManager msgManager = new MessageManager(messageListener);
-        //msgManager.sendMessage("KnownContacts.contacts[0]", "Hi Peer1");
+        boolean success = PeerManager.bootstrap(new BootstrapInformation("127.0.0.1", 4000));
+
+        if (!success) {
+            System.out.println("Could not connect to DHT");
+            return;
+        }
+
+        IMessageListener messageListener = new Peer1();
+        MessageManager msgManager = new MessageManager(messageListener, cm);
+        boolean sent = msgManager.sendMessage(KnownContacts.contacts[0].getName(), "Hello, this is peer 2");
+
+        System.out.println("Message " + (sent ? "sent" : "not sent"));
     }
 
     @Override
