@@ -8,4 +8,6 @@ public interface IMessageTransmitter {
     void receiveContactRequest(Contact sender);
 
     void receiveContactResponse(Contact sender, boolean accepted);
+
+    void showException(Exception e);
 }

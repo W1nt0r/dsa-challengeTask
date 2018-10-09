@@ -2,16 +2,16 @@ package Presentation;
 
 import DomainObjects.BootstrapInformation;
 import DomainObjects.Contact;
-import DomainObjects.Interfaces.IMessageListener;
 import Domainlogic.BootstrapManager;
 import DomainObjects.Interfaces.IMessageTransmitter;
 import Domainlogic.ContactManager;
 import Domainlogic.Exceptions.NetworkJoinException;
 import Domainlogic.Exceptions.PeerCreateException;
+import Domainlogic.Exceptions.SendFailedException;
 import Domainlogic.MessageManager;
 import Domainlogic.PeerManager;
-import Service.Bootstrap;
 import Service.Exceptions.DataSaveException;
+import Service.Exceptions.PeerNotInitializedException;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -35,6 +35,7 @@ import javafx.stage.Stage;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class ChatWindow extends Application {
@@ -176,7 +177,7 @@ public class ChatWindow extends Application {
             grid.add(hbBtn, 1, 2);
             btn.setOnAction((e) -> form.close());
 
-            Scene scene = new Scene(grid, 500, 100);
+            Scene scene = new Scene(grid, 500, 130);
             form.setScene(scene);
             form.showAndWait();
 
@@ -192,6 +193,46 @@ public class ChatWindow extends Application {
 
     public void printReceivedMessage(String message) {
         messages.add(message);
+    }
+
+    public void showContactRequest(Contact sender) {
+        AtomicBoolean accepted = new AtomicBoolean(false);
+
+        Stage form = new Stage();
+
+        GridPane grid = new GridPane();
+        grid.setBackground(Background.EMPTY);
+        grid.setAlignment(Pos.CENTER);
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(25, 25, 25, 25));
+
+        Text scenetitle = new Text(sender.getName() + " sent you a contact-request");
+        scenetitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 14));
+        grid.add(scenetitle, 0, 0, 2, 1);
+
+        Button acceptButton = new Button("Accept");
+        Button rejectButton = new Button("Reject");
+        HBox hbBtn = new HBox(10);
+        hbBtn.setAlignment(Pos.BOTTOM_RIGHT);
+        hbBtn.getChildren().add(acceptButton);
+        hbBtn.getChildren().add(rejectButton);
+        grid.add(hbBtn, 1, 2);
+        acceptButton.setOnAction((e) -> {
+            form.close();
+            accepted.set(true);
+        });
+        rejectButton.setOnAction((e) -> form.close());
+
+        Scene scene = new Scene(grid, 500, 100);
+        form.setScene(scene);
+        form.showAndWait();
+
+        try {
+            messageManager.sendContactResponse(sender, accepted.get());
+        } catch (SendFailedException | PeerNotInitializedException e) {
+            showException(e);
+        }
     }
 
     private void loadKnownContacts() {
@@ -221,6 +262,7 @@ public class ChatWindow extends Application {
     private void initLeftPane() {
         messageListView.setItems(messages);
         sendButton.setOnMouseClicked((event) -> sendMessage());
+        addContactButton.setOnAction((event) -> addContact());
 
         BorderPane leftBottomPane = new BorderPane();
         leftBottomPane.setRight(sendButton);
@@ -250,8 +292,42 @@ public class ChatWindow extends Application {
         try {
             messageManager.sendMessage(contactManager.getOwnContact().getName(), messageField.getText());
         } catch (Exception ex) {
-
+            showException(ex);
         }
+    }
+
+    private void addContact() {
+        Stage form = new Stage();
+        GridPane grid = new GridPane();
+        grid.setBackground(Background.EMPTY);
+        grid.setAlignment(Pos.CENTER);
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(25, 25, 25, 25));
+
+        Text scenetitle = new Text("Please enter contact name:");
+        scenetitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 14));
+        grid.add(scenetitle, 0, 0, 2, 1);
+
+        TextField usernameField = new TextField();
+        usernameField.setPrefWidth(450);
+        grid.add(usernameField, 0, 1, 2, 1);
+
+        Button btn = new Button("Send");
+        HBox hbBtn = new HBox(10);
+        hbBtn.setAlignment(Pos.BOTTOM_RIGHT);
+        hbBtn.getChildren().add(btn);
+        grid.add(hbBtn, 1, 2);
+        btn.setOnAction((e) -> form.close());
+
+        Scene scene = new Scene(grid, 500, 130);
+        form.setScene(scene);
+        form.showAndWait();
+    }
+
+    public void showException(Exception e) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, "ChatSki threw the following exception:\n" + e.getMessage(), ButtonType.OK);
+        alert.showAndWait();
     }
 }
 

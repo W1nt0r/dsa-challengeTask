@@ -5,6 +5,7 @@ import DomainObjects.Interfaces.IMessageTransmitter;
 import DomainObjects.Interfaces.ITransmittable;
 import Domainlogic.Exceptions.NotInContactListException;
 import Domainlogic.Exceptions.SendFailedException;
+import Service.Exceptions.DataSaveException;
 import Service.Exceptions.PeerNotInitializedException;
 import DomainObjects.Interfaces.IMessageListener;
 import Service.PeerCommunicator;
@@ -45,7 +46,15 @@ public class MessageManager implements IMessageListener {
 
     public boolean sendContactResponse(Contact receiver, boolean accepted) throws PeerNotInitializedException, SendFailedException {
         ContactResponse response = new ContactResponse(contactManager.getOwnContact(), accepted);
-        return send(receiver, response);
+        boolean sent = send(receiver, response);
+        if (sent && accepted) {
+            try {
+                contactManager.addContact(receiver.getName());
+            } catch (DataSaveException e) {
+                messageTransmitter.showException(e);
+            }
+        }
+        return sent;
     }
 
     public boolean sendContactRequest(Contact receiver) throws PeerNotInitializedException, SendFailedException {
@@ -88,5 +97,12 @@ public class MessageManager implements IMessageListener {
     @Override
     public void receiveContactResponse(Contact sender, boolean accepted) {
         messageTransmitter.receiveContactResponse(sender, accepted);
+        if (accepted) {
+            try {
+                contactManager.addContact(sender.getName());
+            } catch (DataSaveException e) {
+                messageTransmitter.showException(e);
+            }
+        }
     }
 }

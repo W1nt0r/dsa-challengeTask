@@ -70,4 +70,9 @@ public class Peer implements IMessageTransmitter {
             System.out.println(sender.getName() + " denied your Request");
         }
     }
+
+    @Override
+    public void showException(Exception e) {
+        System.err.println(e.getMessage());
+    }
 }
