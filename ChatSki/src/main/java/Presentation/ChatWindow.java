@@ -1,6 +1,7 @@
 package Presentation;
 
 import DomainObjects.BootstrapInformation;
+import DomainObjects.Contact;
 import DomainObjects.Interfaces.IMessageListener;
 import DomainObjects.Interfaces.IMessageTransmitter;
 import Domainlogic.ContactManager;
@@ -13,10 +14,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
@@ -28,14 +27,14 @@ public class ChatWindow extends Application {
     }
 
     private BorderPane rootBorderPane = new BorderPane();
-    private ListView<String> contactsListView = new ListView<>();
-    private ListView<String> messageListView = new ListView<>();
+    private TableView<Contact> contactTable = new TableView<>();
+    private ListView<String> messageListView = new ListView();
     private Button sendButton = new Button("Send");
     private Button addContactButton = new Button("Add Contact");
     private TextField messageField = new TextField();
 
-    private ObservableList<String> contactItems;
-    private ObservableList<String> messages = contactItems = FXCollections.observableArrayList();
+    private ObservableList<Contact> contactItems;
+    private ObservableList<String> messages = FXCollections.observableArrayList();
     private ContactManager contactManager;
     private MessageManager messageManager;
     private IMessageTransmitter messageListener;
@@ -71,8 +70,19 @@ public class ChatWindow extends Application {
 
     private void loadKnownContacts() {
         contactItems = FXCollections.observableArrayList();
-        contactManager.getContactList().forEach((x, y) -> contactItems.add(y.getName()));
-        contactsListView.setItems(contactItems);
+
+        TableColumn<Contact,String> nameCol = new TableColumn<>("Name");
+        nameCol.setCellValueFactory(new PropertyValueFactory("Name"));
+        TableColumn<Contact, Boolean> onlineCol = new TableColumn<>("isOnline");
+        onlineCol.setCellValueFactory(new PropertyValueFactory("Online"));
+
+        contactManager.getContactList().forEach((x, y) -> {
+            contactItems.add(y);
+        });
+
+        contactTable.getColumns().add(nameCol);
+        contactTable.getColumns().add(onlineCol);
+        contactTable.setItems(contactItems);
     }
 
     private void initTopPane() {
@@ -104,7 +114,7 @@ public class ChatWindow extends Application {
 
         BorderPane borderPane = new BorderPane();
         borderPane.setPadding(new Insets(10));
-        borderPane.setCenter(contactsListView);
+        borderPane.setCenter(contactTable);
         borderPane.setBottom(rightBottomPane);
 
         rootBorderPane.setRight(borderPane);
