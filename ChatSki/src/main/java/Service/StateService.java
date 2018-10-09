@@ -48,7 +48,7 @@ public class StateService {
         try {
             return (State) ownPeer.get(Number160.createHash(stateKey)).start()
                     .awaitUninterruptibly().data().object();
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | NullPointerException e) {
             throw new PeerNotAvailableException();
         }
     }
