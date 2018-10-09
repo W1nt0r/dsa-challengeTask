@@ -3,6 +3,8 @@ package Presentation;
 import DomainObjects.BootstrapInformation;
 import DomainObjects.Contact;
 import DomainObjects.Interfaces.IMessageListener;
+import DomainObjects.Interfaces.IMessageTransmitter;
+import DomainObjects.Message;
 import Domainlogic.ContactManager;
 import Domainlogic.Exceptions.NetworkJoinException;
 import Domainlogic.Exceptions.NotInContactListException;
@@ -14,7 +16,7 @@ import Service.Exceptions.PeerNotInitializedException;
 
 import java.util.Scanner;
 
-public class Peer implements IMessageListener {
+public class Peer implements IMessageTransmitter {
 
     private MessageManager messageManager;
 

@@ -16,6 +16,10 @@ public class Message implements Serializable, ITransmittable {
 
     @Override
     public void handleReception(IMessageListener listener) {
-        listener.receiveMessage(sender, message);
+        listener.receiveMessage(sender, this);
+    }
+
+    public String getMessage() {
+        return message;
     }
 }
