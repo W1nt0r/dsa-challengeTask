@@ -12,7 +12,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
@@ -28,10 +31,12 @@ public class ChatWindow extends Application {
     private ListView<String> messageListView = new ListView();
     private Button sendButton = new Button("Send");
     private Button addContactButton = new Button("Add Contact");
+    private TextField messageField = new TextField();
 
     private ObservableList<String> contactItems;
     private ObservableList<String> messages = contactItems = FXCollections.observableArrayList();
     private ContactManager contactManager;
+    private MessageManager messageManager;
     private IMessageListener messageListener;
 
     @Override
@@ -55,7 +60,7 @@ public class ChatWindow extends Application {
         PeerManager.initializePeer(contactManager.getOwnContact().getName(), contactManager.getOwnContact().getState().getPort());
         PeerManager.bootstrap(new BootstrapInformation("127.0.0.1", 4000));
         messageListener = new ChatWindowMessageListener(this);
-        MessageManager msgManager = new MessageManager(messageListener, contactManager);
+        messageManager = new MessageManager(messageListener, contactManager);
         loadKnownContacts();
     }
 
@@ -79,13 +84,14 @@ public class ChatWindow extends Application {
     }
 
     private void initLeftPane() {
-
         messageListView.setItems(messages);
         sendButton.setOnMouseClicked((event) -> {
+            sendMessage();
         });
 
         BorderPane leftBottomPane = new BorderPane();
         leftBottomPane.setRight(sendButton);
+        leftBottomPane.setLeft(messageField);
 
         BorderPane borderPane = new BorderPane();
         borderPane.setPadding(new Insets(10));
@@ -105,6 +111,14 @@ public class ChatWindow extends Application {
         borderPane.setBottom(rightBottomPane);
 
         rootBorderPane.setRight(borderPane);
+    }
+
+    private void sendMessage() {
+        try {
+            messageManager.sendMessage(contactManager.getOwnContact().getName(), messageField.getText());
+        } catch (Exception ex) {
+
+        }
     }
 }
 

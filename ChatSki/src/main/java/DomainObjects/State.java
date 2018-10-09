@@ -1,5 +1,8 @@
 package DomainObjects;
 
+import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ObservableValue;
+
 import java.io.Serializable;
 
 public class State implements Serializable {
