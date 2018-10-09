@@ -3,6 +3,7 @@ package Domainlogic;
 import DomainObjects.Contact;
 import DomainObjects.ContactRequest;
 import DomainObjects.ContactResponse;
+import DomainObjects.Interfaces.IMessageTransmitter;
 import DomainObjects.Interfaces.ITransmittable;
 import DomainObjects.Message;
 import Domainlogic.Exceptions.NotInContactListException;
@@ -13,16 +14,16 @@ import Service.PeerCommunicator;
 
 import java.net.UnknownHostException;
 
-public class MessageManager {
+public class MessageManager implements IMessageListener {
 
-    private final IMessageListener messageListener;
+    private final IMessageTransmitter messageTransmitter;
     private final PeerCommunicator communicator;
     private final ContactManager contactManager;
 
-    public MessageManager(IMessageListener messageListener, ContactManager contactManager) {
-        this.messageListener = messageListener;
+    public MessageManager(IMessageTransmitter messageListener, ContactManager contactManager) {
+        this.messageTransmitter = messageListener;
         this.contactManager = contactManager;
-        communicator = new PeerCommunicator(messageListener);
+        communicator = new PeerCommunicator(this);
     }
 
     public boolean sendMessage(String receiverName, String message) throws NotInContactListException, SendFailedException, PeerNotInitializedException {
@@ -51,5 +52,20 @@ public class MessageManager {
         } catch (UnknownHostException e) {
             throw new SendFailedException();
         }
+    }
+
+    @Override
+    public void receiveMessage(Contact sender, String message) {
+        messageTransmitter.receiveMessage(sender, message);
+    }
+
+    @Override
+    public void receiveContactRequest(Contact sender) {
+        messageTransmitter.receiveContactRequest(sender);
+    }
+
+    @Override
+    public void receiveContactResponse(Contact sender, boolean accepted) {
+        messageTransmitter.receiveContactResponse(sender, accepted);
     }
 }

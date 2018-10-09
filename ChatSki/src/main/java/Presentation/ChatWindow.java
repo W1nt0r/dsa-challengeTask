@@ -2,6 +2,7 @@ package Presentation;
 
 import DomainObjects.BootstrapInformation;
 import DomainObjects.Interfaces.IMessageListener;
+import DomainObjects.Interfaces.IMessageTransmitter;
 import Domainlogic.ContactManager;
 import Domainlogic.Exceptions.NetworkJoinException;
 import Domainlogic.Exceptions.PeerCreateException;
@@ -27,8 +28,8 @@ public class ChatWindow extends Application {
     }
 
     private BorderPane rootBorderPane = new BorderPane();
-    private ListView<String> contactsListView = new ListView();
-    private ListView<String> messageListView = new ListView();
+    private ListView<String> contactsListView = new ListView<>();
+    private ListView<String> messageListView = new ListView<>();
     private Button sendButton = new Button("Send");
     private Button addContactButton = new Button("Add Contact");
     private TextField messageField = new TextField();
@@ -37,7 +38,7 @@ public class ChatWindow extends Application {
     private ObservableList<String> messages = contactItems = FXCollections.observableArrayList();
     private ContactManager contactManager;
     private MessageManager messageManager;
-    private IMessageListener messageListener;
+    private IMessageTransmitter messageListener;
 
     @Override
     public void start(Stage stage) throws PeerCreateException, NetworkJoinException {
@@ -70,9 +71,7 @@ public class ChatWindow extends Application {
 
     private void loadKnownContacts() {
         contactItems = FXCollections.observableArrayList();
-        contactManager.getContactList().forEach((x, y) -> {
-            contactItems.add(y.getName());
-        });
+        contactManager.getContactList().forEach((x, y) -> contactItems.add(y.getName()));
         contactsListView.setItems(contactItems);
     }
 
@@ -85,9 +84,7 @@ public class ChatWindow extends Application {
 
     private void initLeftPane() {
         messageListView.setItems(messages);
-        sendButton.setOnMouseClicked((event) -> {
-            sendMessage();
-        });
+        sendButton.setOnMouseClicked((event) -> sendMessage());
 
         BorderPane leftBottomPane = new BorderPane();
         leftBottomPane.setRight(sendButton);

@@ -2,8 +2,10 @@ package Presentation;
 
 import DomainObjects.Contact;
 import DomainObjects.Interfaces.IMessageListener;
+import DomainObjects.Interfaces.IMessageTransmitter;
+import javafx.application.Platform;
 
-public class ChatWindowMessageListener implements IMessageListener {
+public class ChatWindowMessageListener implements IMessageTransmitter {
 
     ChatWindow chatWindow;
 
@@ -13,7 +15,7 @@ public class ChatWindowMessageListener implements IMessageListener {
 
     @Override
     public void receiveMessage(Contact sender, String message) {
-        chatWindow.printReceivedMessage(sender.getName() + ": " + message);
+        Platform.runLater(() -> chatWindow.printReceivedMessage(sender.getName() + ": " + message));
     }
 
     @Override
