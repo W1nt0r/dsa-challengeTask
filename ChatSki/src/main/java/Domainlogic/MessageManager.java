@@ -59,16 +59,9 @@ public class MessageManager implements IMessageListener {
         return sent;
     }
 
-    public boolean sendContactRequest(String receiver) throws PeerNotInitializedException, SendFailedException, PeerNotAvailableException {
+    public boolean sendContactRequest(String receiver) throws PeerNotInitializedException, SendFailedException {
         ContactRequest request = new ContactRequest(contactManager.getOwnContact());
-        State receiverState = StateService.LoadStateFromDht(receiver);
-
-        if (!receiverState.isOnline()) {
-            throw new PeerNotAvailableException();
-        }
-
         Contact receiverContact = contactManager.createContactFromName(receiver);
-        receiverContact.setState(receiverState);
 
         return send(receiverContact, request);
     }
