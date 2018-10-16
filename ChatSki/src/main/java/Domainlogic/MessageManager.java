@@ -22,7 +22,7 @@ public class MessageManager implements IMessageListener {
     private final ContactManager contactManager;
     private final Map<String, ChatSequence> activeChats;
 
-    public MessageManager(IMessageTransmitter messageListener, ContactManager contactManager) {
+    public MessageManager(IMessageTransmitter messageListener, ContactManager contactManager) throws PeerNotInitializedException {
         this.messageTransmitter = messageListener;
         this.contactManager = contactManager;
         communicator = new PeerCommunicator(this);

@@ -58,7 +58,7 @@ public class ChatWindow extends Application {
     private IMessageTransmitter messageListener;
 
     @Override
-    public void start(Stage stage) throws PeerCreateException, NetworkJoinException, DataSaveException {
+    public void start(Stage stage) throws PeerCreateException, NetworkJoinException, DataSaveException, PeerNotInitializedException {
         rootBorderPane.setPadding(new Insets(10));
 
         initialize();
@@ -73,7 +73,7 @@ public class ChatWindow extends Application {
         stage.show();
     }
 
-    private void initialize() throws PeerCreateException, NetworkJoinException, DataSaveException {
+    private void initialize() throws PeerCreateException, NetworkJoinException, DataSaveException, PeerNotInitializedException {
         initContacts();
         initPeer();
         messageListener = new ChatWindowMessageListener(this);

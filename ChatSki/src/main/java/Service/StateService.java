@@ -2,6 +2,7 @@ package Service;
 
 import DomainObjects.State;
 import Service.Exceptions.PeerNotAvailableException;
+import Service.Exceptions.PeerNotInitializedException;
 import net.tomp2p.dht.PeerDHT;
 import net.tomp2p.dht.PutBuilder;
 import net.tomp2p.p2p.JobScheduler;
@@ -17,7 +18,7 @@ public class StateService {
     private final static String STATE_KEY_PREFIX = "state-";
     private final static int REPLICATION_WAIT_TIME = 9 * 1000;
 
-    public static boolean SaveStateToDht(String username, State stateToSave) {
+    public static boolean SaveStateToDht(String username, State stateToSave) throws PeerNotInitializedException {
         try {
             final String stateKey = STATE_KEY_PREFIX + username;
             PeerDHT ownPeer = PeerHolder.getOwnPeer();
@@ -41,7 +42,7 @@ public class StateService {
         return false;
     }
 
-    public static State LoadStateFromDht(String username) throws PeerNotAvailableException {
+    public static State LoadStateFromDht(String username) throws PeerNotAvailableException, PeerNotInitializedException {
         final String stateKey = STATE_KEY_PREFIX + username;
         PeerDHT ownPeer = PeerHolder.getOwnPeer();
 
