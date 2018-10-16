@@ -18,7 +18,7 @@ public class StateService {
     private final static String STATE_KEY_PREFIX = "state-";
     private final static int REPLICATION_WAIT_TIME = 9 * 1000;
 
-    public static boolean SaveStateToDht(String username, State stateToSave) {
+    public static boolean SaveStateToDht(String username, State stateToSave) throws PeerNotInitializedException {
         try {
             final String stateKey = STATE_KEY_PREFIX + username;
             PeerDHT ownPeer = PeerHolder.getOwnPeer();

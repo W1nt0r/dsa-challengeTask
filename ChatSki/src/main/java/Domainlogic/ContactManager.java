@@ -4,7 +4,6 @@ import DomainObjects.Contact;
 import DomainObjects.State;
 import Service.DataSaver;
 import Service.Exceptions.DataSaveException;
-import Service.Exceptions.PeerNotAvailableException;
 import Service.Exceptions.PeerNotInitializedException;
 import Service.StateService;
 
@@ -73,19 +72,16 @@ public class ContactManager {
 
     public void writeOwnStateToDHT(boolean online) {
         ownContact.getState().setOnline(online);
+
         try {
             stateService.SaveStateToDht(ownContact.getName(), ownContact.getState());
         } catch (PeerNotInitializedException e) {
             e.printStackTrace();
         }
+
     }
 
     public void updateStates() {
-        try {
-            loadContactList();
-        } catch (DataSaveException e) {
-            e.printStackTrace();
-        }
         for (HashMap.Entry<String, Contact> contactEntry : contactList.entrySet()) {
             contactEntry.setValue(updateState(contactEntry.getValue()));
         }
@@ -129,7 +125,7 @@ public class ContactManager {
     }
 
     private void saveContactList() throws DataSaveException {
-        DataSaver<HashMap<String, Contact>> saver = new DataSaver<>(CONTACT_LIST_FILE);
-        saver.saveData(contactList);
+//        DataSaver<HashMap<String, Contact>> saver = new DataSaver<>(CONTACT_LIST_FILE);
+//        saver.saveData(contactList);
     }
 }

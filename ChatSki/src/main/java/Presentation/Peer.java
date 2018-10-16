@@ -12,6 +12,7 @@ import Domainlogic.Exceptions.PeerCreateException;
 import Domainlogic.Exceptions.SendFailedException;
 import Domainlogic.MessageManager;
 import Domainlogic.PeerManager;
+import Service.Exceptions.PeerNotAvailableException;
 import Service.Exceptions.PeerNotInitializedException;
 
 import java.util.Scanner;
@@ -39,7 +40,12 @@ public class Peer implements IMessageTransmitter {
     }
 
     public void sendContactRequest(Contact contact) throws SendFailedException, PeerNotInitializedException {
-        boolean sent = messageManager.sendContactRequest(contact);
+        boolean sent = false;
+        try {
+            sent = messageManager.sendContactRequest(contact.getName());
+        } catch (PeerNotAvailableException e) {
+            e.printStackTrace();
+        }
         System.out.println("Request " + (sent ? "sent" : "not sent"));
     }
 

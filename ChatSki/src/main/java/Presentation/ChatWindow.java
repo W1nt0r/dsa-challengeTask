@@ -12,7 +12,9 @@ import Domainlogic.Exceptions.SendFailedException;
 import Domainlogic.MessageManager;
 import Domainlogic.PeerManager;
 import Service.Exceptions.DataSaveException;
+import Service.Exceptions.PeerNotAvailableException;
 import Service.Exceptions.PeerNotInitializedException;
+import Service.PortFinder;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -30,6 +32,8 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.io.IOException;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,7 +59,7 @@ public class ChatWindow extends Application {
     private IMessageTransmitter messageListener;
 
     @Override
-    public void start(Stage stage) throws PeerCreateException, NetworkJoinException, DataSaveException, PeerNotInitializedException {
+    public void start(Stage stage) throws PeerCreateException, NetworkJoinException, DataSaveException, PeerNotInitializedException, IOException {
         rootBorderPane.setPadding(new Insets(10));
 
         initialize();
@@ -70,22 +74,27 @@ public class ChatWindow extends Application {
         stage.show();
     }
 
-    private void initialize() throws PeerCreateException, NetworkJoinException, DataSaveException, PeerNotInitializedException {
+    private void initialize() throws PeerCreateException, NetworkJoinException, DataSaveException, PeerNotInitializedException, IOException {
         initContacts();
         initPeer();
+        contactManager.writeOwnStateToDHT(true);
         messageListener = new ChatWindowMessageListener(this);
         messageManager = new MessageManager(messageListener, contactManager);
         loadKnownContacts();
     }
 
-    private void initPeer() throws DataSaveException, PeerCreateException, NetworkJoinException {
+    private void initPeer() throws DataSaveException, PeerCreateException, NetworkJoinException, IOException {
         BootstrapManager bootstrapManager = new BootstrapManager();
 
         if (bootstrapManager.isBootstrapInfoEmpty()) {
             bootstrapManager.setBootstrapInfo(askForBootstrapInformation());
         }
 
-        PeerManager.initializePeer(contactManager.getOwnContact().getName(), 4001);
+        int port = PortFinder.findFreePort();
+        String ip = PeerManager.initializePeer(contactManager.getOwnContact().getName(), PortFinder.findFreePort()).substring(1);
+        contactManager.getOwnContact().setState(new State(ip, port, true));
+
+        System.out.println("address: " + ip + ": " + port);
 
         while (!PeerManager.bootstrap(bootstrapManager.getBootstrapInfo())) {
             bootstrapManager.setBootstrapInfo(askForBootstrapInformation());
@@ -237,7 +246,7 @@ public class ChatWindow extends Application {
     }
 
     private void loadKnownContacts() {
-        contactManager.writeOwnStateToDHT(true);
+
         contactManager.updateStates();
         contactItems.clear();
 
@@ -329,11 +338,13 @@ public class ChatWindow extends Application {
         grid.add(hbBtn, 1, 2);
         btn.setOnAction((e) -> {
             try {
-                messageManager.sendContactRequest(new Contact(usernameField.getText(), State.EMPTY_STATE));
+                messageManager.sendContactRequest(usernameField.getText());
                 form.close();
             } catch (PeerNotInitializedException e1) {
                 e1.printStackTrace();
             } catch (SendFailedException e1) {
+                e1.printStackTrace();
+            } catch (PeerNotAvailableException e1) {
                 e1.printStackTrace();
             }
         });

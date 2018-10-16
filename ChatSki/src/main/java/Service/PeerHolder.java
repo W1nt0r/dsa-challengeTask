@@ -11,8 +11,9 @@ public class PeerHolder {
 
     private static PeerDHT ownPeer;
 
-    public static void initializePeer(String id, int port) throws IOException {
+    public static String initializePeer(String id, int port) throws IOException {
         ownPeer = PeerCreator.CreatePeer(id, port);
+        return ownPeer.peerAddress().inetAddress().toString();
     }
 
     public static boolean bootstrap(BootstrapInformation bootstrapInfo) throws UnknownHostException {

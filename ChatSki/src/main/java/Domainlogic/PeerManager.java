@@ -9,9 +9,9 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 
 public class PeerManager {
-    public static void initializePeer(String id, int port) throws PeerCreateException {
+    public static String initializePeer(String id, int port) throws PeerCreateException {
         try {
-            PeerHolder.initializePeer(id, port);
+            return PeerHolder.initializePeer(id, port);
         } catch (IOException ex) {
             throw new PeerCreateException(ex);
         }

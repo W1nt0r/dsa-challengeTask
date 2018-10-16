@@ -82,7 +82,8 @@ public class MessageManager implements IMessageListener {
             }
 
             receiver.setState(receiverState);
-            return communicator.sendDirect(receiver, transmittable);
+            boolean sendResult = communicator.sendDirect(receiver, transmittable);
+            return sendResult;
         } catch (UnknownHostException ex) {
             throw new SendFailedException();
         } catch (PeerNotAvailableException ex) {
