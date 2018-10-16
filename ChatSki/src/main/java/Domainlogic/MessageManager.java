@@ -6,9 +6,11 @@ import DomainObjects.Interfaces.ITransmittable;
 import Domainlogic.Exceptions.NotInContactListException;
 import Domainlogic.Exceptions.SendFailedException;
 import Service.Exceptions.DataSaveException;
+import Service.Exceptions.PeerNotAvailableException;
 import Service.Exceptions.PeerNotInitializedException;
 import DomainObjects.Interfaces.IMessageListener;
 import Service.PeerCommunicator;
+import Service.StateService;
 
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -57,16 +59,34 @@ public class MessageManager implements IMessageListener {
         return sent;
     }
 
-    public boolean sendContactRequest(Contact receiver) throws PeerNotInitializedException, SendFailedException {
+    public boolean sendContactRequest(String receiver) throws PeerNotInitializedException, SendFailedException, PeerNotAvailableException {
         ContactRequest request = new ContactRequest(contactManager.getOwnContact());
-        return send(receiver, request);
+        State receiverState = StateService.LoadStateFromDht(receiver);
+
+        if (!receiverState.isOnline()) {
+            throw new PeerNotAvailableException();
+        }
+
+        Contact receiverContact = contactManager.createContactFromName(receiver);
+        receiverContact.setState(receiverState);
+
+        return send(receiverContact, request);
     }
 
     private boolean send(Contact receiver, ITransmittable transmittable) throws SendFailedException, PeerNotInitializedException {
         try {
+            State receiverState = StateService.LoadStateFromDht(receiver.getName());
+
+            if (!receiverState.isOnline()) {
+                throw new SendFailedException("Peer is not online");
+            }
+
+            receiver.setState(receiverState);
             return communicator.sendDirect(receiver, transmittable);
-        } catch (UnknownHostException e) {
+        } catch (UnknownHostException ex) {
             throw new SendFailedException();
+        } catch (PeerNotAvailableException ex) {
+            throw new SendFailedException("Peer is not online");
         }
     }
 
