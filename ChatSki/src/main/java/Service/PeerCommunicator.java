@@ -16,7 +16,7 @@ public class PeerCommunicator {
 
     private final IMessageListener messageListener;
 
-    public PeerCommunicator(IMessageListener messageListener) {
+    public PeerCommunicator(IMessageListener messageListener) throws PeerNotInitializedException {
         this.messageListener = messageListener;
         PeerHolder.getOwnPeer().peer().objectDataReply(this::receiveTransmittable);
     }
@@ -34,10 +34,6 @@ public class PeerCommunicator {
     }
 
     public boolean sendDirect(Contact receiver, ITransmittable transmittable) throws UnknownHostException, PeerNotInitializedException {
-        if (PeerHolder.getOwnPeer() == null) {
-            throw new PeerNotInitializedException();
-        }
-
         PeerAddress address = getPeerAddress(receiver);
         FutureDirect future = PeerHolder.getOwnPeer().peer().sendDirect(address).object(transmittable).start();
         future.awaitUninterruptibly();

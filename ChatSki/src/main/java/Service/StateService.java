@@ -18,35 +18,34 @@ public class StateService {
     private final static String STATE_KEY_PREFIX = "state-";
     private final static int REPLICATION_WAIT_TIME = 9 * 1000;
 
-    public static boolean SaveStateToDht(String username, State stateToSave) throws PeerNotInitializedException{
+    public static boolean SaveStateToDht(String username, State stateToSave) {
         try {
             final String stateKey = STATE_KEY_PREFIX + username;
-            if (PeerHolder.getOwnPeer() == null) {
-                throw new PeerNotInitializedException();
-            }
-
             PeerDHT ownPeer = PeerHolder.getOwnPeer();
 
             PutBuilder putBuilder = ownPeer.put(Number160.createHash(stateKey)).data(new Data(stateToSave));
 
-            JobScheduler replication = new JobScheduler(ownPeer.peer());
-            Shutdown shutdown = replication.start(putBuilder, 1000, -1, (future) ->
-                    System.out.println("added replication"));
+            new Thread(() -> {
+                try {
+                    JobScheduler replication = new JobScheduler(ownPeer.peer());
+                    Shutdown shutdown = replication.start(putBuilder, 1000, -1, (future) ->
+                            System.out.println("added replication"));
 
-            Thread.sleep(REPLICATION_WAIT_TIME);
-            System.out.println("stop replication");
-            shutdown.shutdown();
+                    Thread.sleep(REPLICATION_WAIT_TIME);
+                    System.out.println("stop replication");
+                    shutdown.shutdown();
+                } catch (InterruptedException ignored) {
+                }
+
+            }).start();
 
             return true;
         } catch (IOException ex) {
             return false;
-        } catch (InterruptedException ignored) {
         }
-
-        return false;
     }
 
-    public static State LoadStateFromDht(String username) throws PeerNotAvailableException {
+    public static State LoadStateFromDht(String username) throws PeerNotAvailableException, PeerNotInitializedException {
         final String stateKey = STATE_KEY_PREFIX + username;
         PeerDHT ownPeer = PeerHolder.getOwnPeer();
 

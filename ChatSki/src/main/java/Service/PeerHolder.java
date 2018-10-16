@@ -1,6 +1,7 @@
 package Service;
 
 import DomainObjects.BootstrapInformation;
+import Service.Exceptions.PeerNotInitializedException;
 import net.tomp2p.dht.PeerDHT;
 
 import java.io.IOException;
@@ -18,7 +19,11 @@ public class PeerHolder {
         return Bootstrap.bootstrap(ownPeer, bootstrapInfo);
     }
 
-    static PeerDHT getOwnPeer() {
+    static PeerDHT getOwnPeer() throws PeerNotInitializedException{
+        if(ownPeer == null) {
+            throw new PeerNotInitializedException();
+        }
+
         return ownPeer;
     }
 }

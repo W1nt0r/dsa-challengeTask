@@ -20,7 +20,7 @@ public class Peer implements IMessageTransmitter {
 
     private MessageManager messageManager;
 
-    public Peer(Contact ownContact) throws NetworkJoinException, PeerCreateException {
+    public Peer(Contact ownContact) throws NetworkJoinException, PeerCreateException, PeerNotInitializedException {
         ContactManager contactManager = new ContactManager(ownContact, KnownContacts.getContactList());
         PeerManager.initializePeer(ownContact.getName(), ownContact.getState().getPort());
         boolean success = PeerManager.bootstrap(new BootstrapInformation("127.0.0.1", 4000));

@@ -62,9 +62,13 @@ public class ContactManager {
     }
 
     public void addContact(String contactName) throws DataSaveException {
-        Contact newContact = new Contact(contactName, State.EMPTY_STATE);
+        Contact newContact = createContactFromName(contactName);
         contactList.put(contactName, newContact);
         saveContactList();
+    }
+
+    public Contact createContactFromName(String contactName) {
+        return new Contact(contactName, State.EMPTY_STATE);
     }
 
     public void writeOwnStateToDHT(boolean online) {
