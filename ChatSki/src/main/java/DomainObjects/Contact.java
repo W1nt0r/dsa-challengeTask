@@ -12,6 +12,14 @@ public class Contact implements Serializable {
         this.state = state;
     }
 
+    public boolean isOnline(){
+        return state.isOnline();
+    }
+
+    public String getIp(){
+        return state.getIp();
+    }
+
     public String getName() {
         return name;
     }

@@ -7,8 +7,8 @@ import java.util.HashMap;
 
 public final class KnownContacts {
     public final static Contact[] contacts = new Contact[] {
-            new Contact("Peer1", new State("127.0.0.1", 4001, true)),
-            new Contact("Peer2", new State("127.0.0.1", 4002, true))
+            new Contact("Peer1", new State("127.0.0.1", 4001, false)),
+            new Contact("Peer2", new State("127.0.0.1", 4002, false))
     };
 
     public static HashMap<String, Contact> getContactList() {

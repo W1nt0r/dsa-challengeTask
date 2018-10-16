@@ -2,8 +2,9 @@ package Presentation;
 
 import DomainObjects.BootstrapInformation;
 import DomainObjects.Contact;
-import Domainlogic.BootstrapManager;
 import DomainObjects.Interfaces.IMessageTransmitter;
+import DomainObjects.State;
+import Domainlogic.BootstrapManager;
 import Domainlogic.ContactManager;
 import Domainlogic.Exceptions.NetworkJoinException;
 import Domainlogic.Exceptions.PeerCreateException;
@@ -20,10 +21,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -51,7 +48,7 @@ public class ChatWindow extends Application {
     private Button addContactButton = new Button("Add Contact");
     private TextField messageField = new TextField();
 
-    private ObservableList<Contact> contactItems;
+    private ObservableList<Contact> contactItems = FXCollections.observableArrayList();
     private ObservableList<String> messages = FXCollections.observableArrayList();
     private ContactManager contactManager;
     private MessageManager messageManager;
@@ -229,26 +226,37 @@ public class ChatWindow extends Application {
         form.showAndWait();
 
         try {
-            messageManager.sendContactResponse(sender, accepted.get());
+            boolean success = messageManager.sendContactResponse(sender, accepted.get());
+            if (success) {
+                loadKnownContacts();
+
+            }
         } catch (SendFailedException | PeerNotInitializedException e) {
             showException(e);
         }
     }
 
     private void loadKnownContacts() {
-        contactItems = FXCollections.observableArrayList();
+        contactManager.writeOwnStateToDHT(true);
+        contactManager.updateStates();
+        contactItems.clear();
 
-        TableColumn<Contact,String> nameCol = new TableColumn<>("Name");
+        TableColumn<Contact, String> nameCol = new TableColumn<>("Name");
         nameCol.setCellValueFactory(new PropertyValueFactory("Name"));
         TableColumn<Contact, Boolean> onlineCol = new TableColumn<>("isOnline");
         onlineCol.setCellValueFactory(new PropertyValueFactory("Online"));
+
+        TableColumn<Contact, String> ipCol = new TableColumn<>("IP");
+        ipCol.setCellValueFactory(new PropertyValueFactory("Ip"));
 
         contactManager.getContactList().forEach((x, y) -> {
             contactItems.add(y);
         });
 
+        contactTable = new TableView<>();
         contactTable.getColumns().add(nameCol);
         contactTable.getColumns().add(onlineCol);
+        contactTable.getColumns().add(ipCol);
         contactTable.setItems(contactItems);
     }
 
@@ -290,6 +298,7 @@ public class ChatWindow extends Application {
 
     private void sendMessage() {
         try {
+            loadKnownContacts();
             messageManager.sendMessage(contactManager.getOwnContact().getName(), messageField.getText());
         } catch (Exception ex) {
             showException(ex);
@@ -318,7 +327,16 @@ public class ChatWindow extends Application {
         hbBtn.setAlignment(Pos.BOTTOM_RIGHT);
         hbBtn.getChildren().add(btn);
         grid.add(hbBtn, 1, 2);
-        btn.setOnAction((e) -> form.close());
+        btn.setOnAction((e) -> {
+            try {
+                messageManager.sendContactRequest(new Contact(usernameField.getText(), State.EMPTY_STATE));
+                form.close();
+            } catch (PeerNotInitializedException e1) {
+                e1.printStackTrace();
+            } catch (SendFailedException e1) {
+                e1.printStackTrace();
+            }
+        });
 
         Scene scene = new Scene(grid, 500, 130);
         form.setScene(scene);

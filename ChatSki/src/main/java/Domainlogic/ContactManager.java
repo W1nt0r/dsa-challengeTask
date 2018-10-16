@@ -4,6 +4,9 @@ import DomainObjects.Contact;
 import DomainObjects.State;
 import Service.DataSaver;
 import Service.Exceptions.DataSaveException;
+import Service.Exceptions.PeerNotAvailableException;
+import Service.Exceptions.PeerNotInitializedException;
+import Service.StateService;
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;
@@ -12,6 +15,7 @@ public class ContactManager {
 
     private final String OWN_CONTACT_FILE = "OwnContact.ser";
     private final String CONTACT_LIST_FILE = "ContactList.ser";
+    private StateService stateService = new StateService();
 
     private Contact ownContact;
 
@@ -63,6 +67,40 @@ public class ContactManager {
         saveContactList();
     }
 
+    public void writeOwnStateToDHT(boolean online) {
+        ownContact.getState().setOnline(online);
+        try {
+            stateService.SaveStateToDht(ownContact.getName(), ownContact.getState());
+        } catch (PeerNotInitializedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateStates() {
+        try {
+            loadContactList();
+        } catch (DataSaveException e) {
+            e.printStackTrace();
+        }
+        for (HashMap.Entry<String, Contact> contactEntry : contactList.entrySet()) {
+            contactEntry.setValue(updateState(contactEntry.getValue()));
+        }
+    }
+
+    public Contact updateState(Contact contact) {
+        contact.setState(getStateForContact(contact.getName()));
+        return contact;
+    }
+
+    private State getStateForContact(String name) {
+        try {
+            State state = stateService.LoadStateFromDht(name);
+            return state;
+        } catch (Exception e) {
+            return State.EMPTY_STATE;
+        }
+    }
+
     private void loadOwnContact() throws DataSaveException {
         DataSaver<Contact> saver = new DataSaver<>(OWN_CONTACT_FILE);
         try {
@@ -73,8 +111,8 @@ public class ContactManager {
     }
 
     private void saveOwnContact() throws DataSaveException {
-        DataSaver<Contact> saver = new DataSaver<>(OWN_CONTACT_FILE);
-        saver.saveData(ownContact);
+//        DataSaver<Contact> saver = new DataSaver<>(OWN_CONTACT_FILE);
+//        saver.saveData(ownContact);
     }
 
     private void loadContactList() throws DataSaveException {
