@@ -25,21 +25,24 @@ public class StateService {
 
             PutBuilder putBuilder = ownPeer.put(Number160.createHash(stateKey)).data(new Data(stateToSave));
 
-            JobScheduler replication = new JobScheduler(ownPeer.peer());
-            Shutdown shutdown = replication.start(putBuilder, 1000, -1, (future) ->
-                    System.out.println("added replication"));
+            new Thread(() -> {
+                try {
+                    JobScheduler replication = new JobScheduler(ownPeer.peer());
+                    Shutdown shutdown = replication.start(putBuilder, 1000, -1, (future) ->
+                            System.out.println("added replication"));
 
-            Thread.sleep(REPLICATION_WAIT_TIME);
-            System.out.println("stop replication");
-            shutdown.shutdown();
+                    Thread.sleep(REPLICATION_WAIT_TIME);
+                    System.out.println("stop replication");
+                    shutdown.shutdown();
+                } catch (InterruptedException ignored) {
+                }
+
+            }).start();
 
             return true;
         } catch (IOException ex) {
             return false;
-        } catch (InterruptedException ignored) {
         }
-
-        return false;
     }
 
     public static State LoadStateFromDht(String username) throws PeerNotAvailableException, PeerNotInitializedException {
