@@ -9,6 +9,6 @@ public class Peer2 {
 
     public static void main(String[] args) throws NetworkJoinException, PeerCreateException, SendFailedException, PeerNotInitializedException {
         Peer p = new Peer(KnownContacts.contacts[1]);
-        p.sendContactRequest(KnownContacts.contacts[0]);
+        p.sendContactRequest(KnownContacts.contacts[0].getName());
     }
 }

@@ -24,4 +24,8 @@ public class PeerManager {
             throw new NetworkJoinException(e);
         }
     }
+
+    public static void closePeer() {
+        PeerHolder.closePeer();
+    }
 }

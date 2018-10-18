@@ -24,6 +24,7 @@ public class Peer implements IMessageTransmitter {
     public Peer(Contact ownContact) throws NetworkJoinException, PeerCreateException, PeerNotInitializedException {
         ContactManager contactManager = new ContactManager(ownContact, KnownContacts.getContactList());
         PeerManager.initializePeer(ownContact.getName(), ownContact.getState().getPort());
+        contactManager.writeOwnStateToDHT(true);
         boolean success = PeerManager.bootstrap(new BootstrapInformation("127.0.0.1", 4000));
 
         if (!success) {
@@ -39,13 +40,8 @@ public class Peer implements IMessageTransmitter {
         System.out.println("Message " + (sent ? "sent" : "not sent"));
     }
 
-    public void sendContactRequest(Contact contact) throws SendFailedException, PeerNotInitializedException {
-        boolean sent = false;
-        try {
-            sent = messageManager.sendContactRequest(contact.getName());
-        } catch (PeerNotAvailableException e) {
-            e.printStackTrace();
-        }
+    public void sendContactRequest(String name) throws SendFailedException, PeerNotInitializedException {
+        boolean sent = messageManager.sendContactRequest(name);
         System.out.println("Request " + (sent ? "sent" : "not sent"));
     }
 

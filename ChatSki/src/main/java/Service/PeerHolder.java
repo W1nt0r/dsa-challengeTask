@@ -20,6 +20,12 @@ public class PeerHolder {
         return Bootstrap.bootstrap(ownPeer, bootstrapInfo);
     }
 
+    public static void closePeer() {
+        if (ownPeer != null) {
+            ownPeer.shutdown();
+        }
+    }
+
     static PeerDHT getOwnPeer() throws PeerNotInitializedException{
         if(ownPeer == null) {
             throw new PeerNotInitializedException();

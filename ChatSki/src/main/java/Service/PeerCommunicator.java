@@ -29,7 +29,9 @@ public class PeerCommunicator {
 
     private TransmissionConfirmation receiveTransmittable(PeerAddress sender, Object request) {
         ITransmittable transmittable = (ITransmittable) request;
-        transmittable.handleReception(messageListener);
+        new Thread(() -> {
+            transmittable.handleReception(messageListener);
+        }).start();
         return new TransmissionConfirmation();
     }
 

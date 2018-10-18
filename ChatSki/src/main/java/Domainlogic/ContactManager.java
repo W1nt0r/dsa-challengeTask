@@ -14,7 +14,6 @@ public class ContactManager {
 
     private final String OWN_CONTACT_FILE = "OwnContact.ser";
     private final String CONTACT_LIST_FILE = "ContactList.ser";
-    private StateService stateService = new StateService();
 
     private Contact ownContact;
 
@@ -70,15 +69,10 @@ public class ContactManager {
         return new Contact(contactName, State.EMPTY_STATE);
     }
 
-    public void writeOwnStateToDHT(boolean online) {
+    public void writeOwnStateToDHT(boolean online) throws PeerNotInitializedException {
         ownContact.getState().setOnline(online);
 
-        try {
-            stateService.SaveStateToDht(ownContact.getName(), ownContact.getState());
-        } catch (PeerNotInitializedException e) {
-            e.printStackTrace();
-        }
-
+        StateService.SaveStateToDht(ownContact.getName(), ownContact.getState());
     }
 
     public void updateStates() {
@@ -94,7 +88,7 @@ public class ContactManager {
 
     private State getStateForContact(String name) {
         try {
-            State state = stateService.LoadStateFromDht(name);
+            State state = StateService.LoadStateFromDht(name);
             return state;
         } catch (Exception e) {
             return State.EMPTY_STATE;

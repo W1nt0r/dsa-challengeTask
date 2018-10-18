@@ -2,7 +2,6 @@ package Presentation;
 
 import DomainObjects.BootstrapInformation;
 import DomainObjects.Contact;
-import DomainObjects.Interfaces.IMessageTransmitter;
 import DomainObjects.State;
 import Domainlogic.BootstrapManager;
 import Domainlogic.ContactManager;
@@ -12,7 +11,6 @@ import Domainlogic.Exceptions.SendFailedException;
 import Domainlogic.MessageManager;
 import Domainlogic.PeerManager;
 import Service.Exceptions.DataSaveException;
-import Service.Exceptions.PeerNotAvailableException;
 import Service.Exceptions.PeerNotInitializedException;
 import Service.PortFinder;
 import javafx.application.Application;
@@ -33,7 +31,6 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,7 +44,7 @@ public class ChatWindow extends Application {
 
     private BorderPane rootBorderPane = new BorderPane();
     private TableView<Contact> contactTable = new TableView<>();
-    private ListView<String> messageListView = new ListView();
+    private ListView<String> messageListView = new ListView<>();
     private Button sendButton = new Button("Send");
     private Button addContactButton = new Button("Add Contact");
     private TextField messageField = new TextField();
@@ -56,13 +53,23 @@ public class ChatWindow extends Application {
     private ObservableList<String> messages = FXCollections.observableArrayList();
     private ContactManager contactManager;
     private MessageManager messageManager;
-    private IMessageTransmitter messageListener;
 
     @Override
-    public void start(Stage stage) throws PeerCreateException, NetworkJoinException, DataSaveException, PeerNotInitializedException, IOException {
+    public void start(Stage stage) {
         rootBorderPane.setPadding(new Insets(10));
 
-        initialize();
+        boolean initialized = false;
+        try {
+            initialized = initialize();
+        } catch (Exception e) {
+            showException(e);
+        }
+
+        if (!initialized) {
+            stop();
+            return;
+        }
+
         initLeftPane();
         initRightPane();
         initTopPane();
@@ -74,34 +81,53 @@ public class ChatWindow extends Application {
         stage.show();
     }
 
-    private void initialize() throws PeerCreateException, NetworkJoinException, DataSaveException, PeerNotInitializedException, IOException {
-        initContacts();
-        initPeer();
-        contactManager.writeOwnStateToDHT(true);
-        messageListener = new ChatWindowMessageListener(this);
-        messageManager = new MessageManager(messageListener, contactManager);
-        loadKnownContacts();
+    @Override
+    public void stop() {
+        PeerManager.closePeer();
     }
 
-    private void initPeer() throws DataSaveException, PeerCreateException, NetworkJoinException, IOException {
+    private boolean initialize() throws PeerCreateException, NetworkJoinException, DataSaveException, PeerNotInitializedException, IOException {
+        if (!initContacts() || !initPeer()) {
+            return false;
+        }
+        messageManager = new MessageManager(new ChatWindowMessageListener(this), contactManager);
+        loadKnownContacts();
+        return true;
+    }
+
+    private boolean initPeer() throws DataSaveException, PeerCreateException, NetworkJoinException, IOException, PeerNotInitializedException {
         BootstrapManager bootstrapManager = new BootstrapManager();
 
         if (bootstrapManager.isBootstrapInfoEmpty()) {
-            bootstrapManager.setBootstrapInfo(askForBootstrapInformation());
+            BootstrapInformation info = askForBootstrapInformation(null);
+            if (info == null) {
+                return false;
+            }
+            bootstrapManager.setBootstrapInfo(info);
         }
 
         int port = PortFinder.findFreePort();
-        String ip = PeerManager.initializePeer(contactManager.getOwnContact().getName(), PortFinder.findFreePort()).substring(1);
+        String ip = PeerManager.initializePeer(contactManager.getOwnContact().getName(), port).substring(1);
         contactManager.getOwnContact().setState(new State(ip, port, true));
 
-        System.out.println("address: " + ip + ": " + port);
-
         while (!PeerManager.bootstrap(bootstrapManager.getBootstrapInfo())) {
-            bootstrapManager.setBootstrapInfo(askForBootstrapInformation());
+            BootstrapInformation info = askForBootstrapInformation(bootstrapManager.getBootstrapInfo());
+            if (info == null) {
+                return false;
+            }
+            bootstrapManager.setBootstrapInfo(info);
         }
+        contactManager.writeOwnStateToDHT(true);
+        return true;
     }
 
-    private BootstrapInformation askForBootstrapInformation() {
+    private BootstrapInformation askForBootstrapInformation(BootstrapInformation oldInformation) {
+        String oldIp = "";
+        String oldPort = "";
+        if (oldInformation != null) {
+            oldIp = oldInformation.getIpAddress();
+            oldPort = String.valueOf(oldInformation.getPort());
+        }
         Stage form = new Stage();
         GridPane grid = new GridPane();
         grid.setBackground(Background.EMPTY);
@@ -118,12 +144,14 @@ public class ChatWindow extends Application {
         grid.add(ipLabel, 0, 1);
 
         TextField ipField = new TextField();
+        ipField.setText(oldIp);
         grid.add(ipField, 1, 1);
 
         Label portLabel = new Label("Port:");
         grid.add(portLabel, 0, 2);
 
         TextField portField = new TextField();
+        portField.setText(oldPort);
         grid.add(portField, 1, 2);
 
         Button btn = new Button("Send");
@@ -131,7 +159,12 @@ public class ChatWindow extends Application {
         hbBtn.setAlignment(Pos.BOTTOM_RIGHT);
         hbBtn.getChildren().add(btn);
         grid.add(hbBtn, 1, 3);
-        btn.setOnAction((e) -> form.close());
+
+        AtomicBoolean sent = new AtomicBoolean(false);
+        btn.setOnAction((e) -> {
+            sent.set(true);
+            form.close();
+        });
 
         Scene scene = new Scene(grid, 300, 200);
         form.setScene(scene);
@@ -139,6 +172,7 @@ public class ChatWindow extends Application {
         String ipAddress;
         int port;
         do {
+            sent.set(false);
             form.showAndWait();
             ipAddress = ipField.getText();
             try {
@@ -152,12 +186,17 @@ public class ChatWindow extends Application {
             } catch (NumberFormatException e) {
                 port = -1;
             }
-        } while (ipAddress.trim().isEmpty() || port == -1);
+        } while (sent.get() && (ipAddress.trim().isEmpty() || port == -1));
+
+        if (!sent.get()) {
+            stop();
+            return null;
+        }
 
         return new BootstrapInformation(ipAddress, port);
     }
 
-    private void initContacts() throws DataSaveException {
+    private boolean initContacts() throws DataSaveException {
         contactManager = new ContactManager();
         if (contactManager.isOwnContactEmpty()) {
             Stage form = new Stage();
@@ -176,25 +215,34 @@ public class ChatWindow extends Application {
             usernameField.setPrefWidth(450);
             grid.add(usernameField, 0, 1, 2, 1);
 
+            AtomicBoolean sent = new AtomicBoolean(false);
             Button btn = new Button("Send");
             HBox hbBtn = new HBox(10);
             hbBtn.setAlignment(Pos.BOTTOM_RIGHT);
             hbBtn.getChildren().add(btn);
             grid.add(hbBtn, 1, 2);
-            btn.setOnAction((e) -> form.close());
+            btn.setOnAction((e) -> {
+                sent.set(true);
+                form.close();
+            });
 
             Scene scene = new Scene(grid, 500, 130);
             form.setScene(scene);
-            form.showAndWait();
 
-            String username = usernameField.getText();
-            while (username.trim().isEmpty()) {
+            String username;
+            do {
+                sent.set(false);
                 form.showAndWait();
                 username = usernameField.getText();
+            } while (sent.get() && username.trim().isEmpty());
+
+            if (!sent.get()) {
+                return false;
             }
 
             contactManager.setOwnContactName(username);
         }
+        return true;
     }
 
     public void printReceivedMessage(String message) {
@@ -236,13 +284,18 @@ public class ChatWindow extends Application {
 
         try {
             boolean success = messageManager.sendContactResponse(sender, accepted.get());
-            if (success) {
+            if (success && accepted.get()) {
                 loadKnownContacts();
 
             }
         } catch (SendFailedException | PeerNotInitializedException e) {
             showException(e);
         }
+    }
+
+    public void showContactResponse(Contact sender, boolean accepted) {
+        loadKnownContacts();
+        showInformation(sender.getName() + " " + (accepted ? "accepted" : "rejected") + " your request");
     }
 
     private void loadKnownContacts() {
@@ -336,26 +389,27 @@ public class ChatWindow extends Application {
         hbBtn.setAlignment(Pos.BOTTOM_RIGHT);
         hbBtn.getChildren().add(btn);
         grid.add(hbBtn, 1, 2);
-        btn.setOnAction((e) -> {
-            try {
-                messageManager.sendContactRequest(usernameField.getText());
-                form.close();
-            } catch (PeerNotInitializedException e1) {
-                e1.printStackTrace();
-            } catch (SendFailedException e1) {
-                e1.printStackTrace();
-            } catch (PeerNotAvailableException e1) {
-                e1.printStackTrace();
-            }
-        });
+        btn.setOnAction((e) -> form.close());
 
         Scene scene = new Scene(grid, 500, 130);
         form.setScene(scene);
         form.showAndWait();
+
+        try {
+            messageManager.sendContactRequest(usernameField.getText());
+        } catch (PeerNotInitializedException | SendFailedException e) {
+            showException(e);
+        }
     }
 
     public void showException(Exception e) {
         Alert alert = new Alert(Alert.AlertType.ERROR, "ChatSki threw the following exception:\n" + e.getMessage(), ButtonType.OK);
+        alert.showAndWait();
+        e.printStackTrace();
+    }
+
+    public void showInformation(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, message, ButtonType.OK);
         alert.showAndWait();
     }
 }

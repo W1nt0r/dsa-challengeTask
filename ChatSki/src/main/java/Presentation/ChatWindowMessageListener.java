@@ -25,7 +25,7 @@ public class ChatWindowMessageListener implements IMessageTransmitter {
 
     @Override
     public void receiveContactResponse(Contact sender, boolean accepted) {
-
+        Platform.runLater(() -> chatWindow.showContactResponse(sender, accepted));
     }
 
     @Override
