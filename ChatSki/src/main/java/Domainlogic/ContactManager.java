@@ -8,7 +8,10 @@ import Service.Exceptions.PeerNotInitializedException;
 import Service.StateService;
 
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 
 public class ContactManager {
 
@@ -17,8 +20,8 @@ public class ContactManager {
 
     private Contact ownContact;
 
-    public HashMap<String, Contact> getContactList() {
-        return contactList;
+    public List<Contact> getContactList() {
+        return new ArrayList<>(contactList.values());
     }
 
     private HashMap<String, Contact> contactList;
@@ -88,8 +91,7 @@ public class ContactManager {
 
     private State getStateForContact(String name) {
         try {
-            State state = StateService.LoadStateFromDht(name);
-            return state;
+            return StateService.LoadStateFromDht(name);
         } catch (Exception e) {
             return State.EMPTY_STATE;
         }

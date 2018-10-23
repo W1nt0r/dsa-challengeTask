@@ -13,6 +13,7 @@ import Service.PeerCommunicator;
 import Service.StateService;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,9 @@ public class MessageManager implements IMessageListener {
     }
 
     public synchronized List<Message> getChatHistory(String username) {
-        return activeChats.get(username).getChatMessages();
+        ChatSequence conversation = activeChats.get(username);
+
+        return conversation == null ? new ArrayList<>() : conversation.getChatMessages();
     }
 
     public boolean sendContactResponse(Contact receiver, boolean accepted) throws PeerNotInitializedException, SendFailedException {
@@ -75,8 +78,7 @@ public class MessageManager implements IMessageListener {
             }
 
             receiver.setState(receiverState);
-            boolean sendResult = communicator.sendDirect(receiver, transmittable);
-            return sendResult;
+            return communicator.sendDirect(receiver, transmittable);
         } catch (UnknownHostException ex) {
             throw new SendFailedException();
         } catch (PeerNotAvailableException ex) {
@@ -89,7 +91,7 @@ public class MessageManager implements IMessageListener {
     }
 
     private synchronized void appendMessageToChatSequence(String username, Message message) {
-        if(!isChatActive(username)) {
+        if (!isChatActive(username)) {
             activeChats.put(username, new ChatSequence());
         }
 
@@ -100,7 +102,7 @@ public class MessageManager implements IMessageListener {
     public void receiveMessage(Contact sender, Message message) {
         appendMessageToChatSequence(sender.getName(), message);
 
-        messageTransmitter.receiveMessage(sender, message.getMessage());
+        messageTransmitter.receiveMessage(sender, message);
     }
 
     @Override

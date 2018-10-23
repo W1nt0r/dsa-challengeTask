@@ -19,6 +19,12 @@ public class Message implements Serializable, ITransmittable {
         listener.receiveMessage(sender, this);
     }
 
+
+    @Override
+    public String toString() {
+        return sender.getName() + ": " + message;
+    }
+
     public String getMessage() {
         return message;
     }

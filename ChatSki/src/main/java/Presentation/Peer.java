@@ -2,7 +2,6 @@ package Presentation;
 
 import DomainObjects.BootstrapInformation;
 import DomainObjects.Contact;
-import DomainObjects.Interfaces.IMessageListener;
 import DomainObjects.Interfaces.IMessageTransmitter;
 import DomainObjects.Message;
 import Domainlogic.ContactManager;
@@ -12,7 +11,6 @@ import Domainlogic.Exceptions.PeerCreateException;
 import Domainlogic.Exceptions.SendFailedException;
 import Domainlogic.MessageManager;
 import Domainlogic.PeerManager;
-import Service.Exceptions.PeerNotAvailableException;
 import Service.Exceptions.PeerNotInitializedException;
 
 import java.util.Scanner;
@@ -46,7 +44,7 @@ public class Peer implements IMessageTransmitter {
     }
 
     @Override
-    public void receiveMessage(Contact sender, String message) {
+    public void receiveMessage(Contact sender, Message message) {
         System.out.println(sender.getName() + " sent: " + message);
     }
 

@@ -2,6 +2,7 @@ package Presentation;
 
 import DomainObjects.BootstrapInformation;
 import DomainObjects.Contact;
+import DomainObjects.Message;
 import DomainObjects.State;
 import Domainlogic.BootstrapManager;
 import Domainlogic.ContactManager;
@@ -27,6 +28,9 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 
 
 public class ChatWindow extends Application {
@@ -37,15 +41,16 @@ public class ChatWindow extends Application {
 
     private BorderPane rootBorderPane = new BorderPane();
     private TableView<Contact> contactTable = new TableView<>();
-    private ListView<String> messageListView = new ListView<>();
+    private ListView<Message> messageListView = new ListView<>();
     private Button sendButton = new Button("Send");
     private Button addContactButton = new Button("Add Contact");
     private TextField messageField = new TextField();
 
     private ObservableList<Contact> contactItems = FXCollections.observableArrayList();
-    private ObservableList<String> messages = FXCollections.observableArrayList();
+    private ObservableList<Message> messages = FXCollections.observableArrayList();
     private ContactManager contactManager;
     private MessageManager messageManager;
+    private Contact activeChat;
 
     @Override
     public void start(Stage stage) {
@@ -85,7 +90,19 @@ public class ChatWindow extends Application {
         }
         messageManager = new MessageManager(new ChatWindowMessageListener(this), contactManager);
         loadKnownContacts();
+
+        initializeActiveChat();
+
         return true;
+    }
+
+    private void initializeActiveChat() {
+        List<Contact> contactList = contactManager.getContactList();
+        if (contactList.size() > 0) {
+            activeChat = contactList.get(0);
+        } else {
+            activeChat = null;
+        }
     }
 
     private boolean initPeer() throws DataSaveException, PeerCreateException, NetworkJoinException, IOException, PeerNotInitializedException {
@@ -171,7 +188,7 @@ public class ChatWindow extends Application {
         return true;
     }
 
-    public void printReceivedMessage(String message) {
+    public void printReceivedMessage(Message message) {
         messages.add(message);
     }
 
@@ -196,21 +213,18 @@ public class ChatWindow extends Application {
     }
 
     private void loadKnownContacts() {
-
         contactManager.updateStates();
         contactItems.clear();
 
         TableColumn<Contact, String> nameCol = new TableColumn<>("Name");
-        nameCol.setCellValueFactory(new PropertyValueFactory("Name"));
+        nameCol.setCellValueFactory(new PropertyValueFactory<>("Name"));
         TableColumn<Contact, Boolean> onlineCol = new TableColumn<>("isOnline");
-        onlineCol.setCellValueFactory(new PropertyValueFactory("Online"));
+        onlineCol.setCellValueFactory(new PropertyValueFactory<>("Online"));
 
         TableColumn<Contact, String> ipCol = new TableColumn<>("IP");
-        ipCol.setCellValueFactory(new PropertyValueFactory("Ip"));
+        ipCol.setCellValueFactory(new PropertyValueFactory<>("Ip"));
 
-        contactManager.getContactList().forEach((x, y) -> {
-            contactItems.add(y);
-        });
+        contactItems.addAll(contactManager.getContactList());
 
         contactTable = new TableView<>();
         contactTable.getColumns().add(nameCol);
@@ -253,12 +267,31 @@ public class ChatWindow extends Application {
         borderPane.setBottom(rightBottomPane);
 
         rootBorderPane.setRight(borderPane);
+
+        contactTable.getSelectionModel().selectedItemProperty()
+                .addListener((observable, oldSelected, newSelected) -> showContactConversation(newSelected));
+    }
+
+    private void showContactConversation(Contact contact) {
+        if (contact != null) {
+            messages.clear();
+            activeChat = contact;
+
+            String username = contact.getName();
+            List<Message> conversation = messageManager.getChatHistory(username);
+            messages.addAll(conversation);
+        }
     }
 
     private void sendMessage() {
         try {
-            loadKnownContacts();
-            messageManager.sendMessage(contactManager.getOwnContact().getName(), messageField.getText());
+            if (activeChat != null) {
+                messageManager.sendMessage(activeChat.getName(), messageField.getText());
+            } else {
+                showInformation("No Contacts available", "You should add some contacts to your contact list.");
+            }
+
+
         } catch (Exception ex) {
             showException(ex);
         }
@@ -287,7 +320,7 @@ public class ChatWindow extends Application {
         e.printStackTrace();
     }
 
-    public void showInformation(String title, String message) {
+    private void showInformation(String title, String message) {
         Form form = new Form(title, message, FormType.OK);
         form.showAndWait();
     }
