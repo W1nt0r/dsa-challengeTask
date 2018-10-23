@@ -10,5 +10,11 @@ public interface IMessageTransmitter {
 
     void receiveContactResponse(Contact sender, boolean accepted);
 
-    void showException(Exception e);
+    void receiveMessageConfirmation(Contact receiver, Message message);
+
+    void receiveContactRequestConfirmation(Contact receiver);
+
+    void receiveContactResponseConfirmation(Contact receiver, boolean accepted);
+
+    void showThrowable(Throwable t);
 }

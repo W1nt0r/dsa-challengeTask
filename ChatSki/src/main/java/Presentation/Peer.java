@@ -34,13 +34,13 @@ public class Peer implements IMessageTransmitter {
     }
 
     public void sendMessage(String receiver, String message) throws SendFailedException, PeerNotInitializedException, NotInContactListException {
-        boolean sent = messageManager.sendMessage(receiver, message);
-        System.out.println("Message " + (sent ? "sent" : "not sent"));
+        messageManager.sendMessage(receiver, message);
+        //System.out.println("Message " + (sent ? "sent" : "not sent"));
     }
 
     public void sendContactRequest(String name) throws SendFailedException, PeerNotInitializedException {
-        boolean sent = messageManager.sendContactRequest(name);
-        System.out.println("Request " + (sent ? "sent" : "not sent"));
+        messageManager.sendContactRequest(name);
+        //System.out.println("Request " + (sent ? "sent" : "not sent"));
     }
 
     @Override
@@ -55,8 +55,8 @@ public class Peer implements IMessageTransmitter {
         System.out.println("Would you like to accept? [Y/N]");
         String answer = scanner.nextLine();
         try {
-            boolean sent = messageManager.sendContactResponse(sender, answer.toLowerCase().equals("y"));
-            System.out.println("Response " + (sent ? "sent" : "not sent"));
+            messageManager.sendContactResponse(sender, answer.toLowerCase().equals("y"));
+            //System.out.println("Response " + (sent ? "sent" : "not sent"));
         } catch (PeerNotInitializedException | SendFailedException e) {
             e.printStackTrace();
         }
@@ -72,7 +72,23 @@ public class Peer implements IMessageTransmitter {
     }
 
     @Override
-    public void showException(Exception e) {
-        System.err.println(e.getMessage());
+    public void receiveMessageConfirmation(Contact receiver, Message message) {
+
+    }
+
+    @Override
+    public void receiveContactRequestConfirmation(Contact receiver) {
+
+    }
+
+    @Override
+    public void receiveContactResponseConfirmation(Contact receiver,
+                                                   boolean accepted) {
+
+    }
+
+    @Override
+    public void showThrowable(Throwable t) {
+        System.err.println(t.getMessage());
     }
 }

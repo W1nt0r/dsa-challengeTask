@@ -25,6 +25,12 @@ public class Message implements Serializable, ITransmittable {
         return sender.getName() + ": " + message;
     }
 
+    @Override
+    public void handleConfirmation(Contact receiver,
+                                   IMessageListener listener) {
+        listener.receiveMessageConfirmation(receiver, this);
+    }
+
     public String getMessage() {
         return message;
     }

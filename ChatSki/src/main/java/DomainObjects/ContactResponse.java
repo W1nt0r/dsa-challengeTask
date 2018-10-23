@@ -20,4 +20,10 @@ public class ContactResponse implements Serializable, ITransmittable {
     public void handleReception(IMessageListener listener) {
         listener.receiveContactResponse(sender, accepted);
     }
+
+    @Override
+    public void handleConfirmation(Contact receiver,
+                                   IMessageListener listener) {
+        listener.receiveContactResponseConfirmation(receiver, accepted);
+    }
 }

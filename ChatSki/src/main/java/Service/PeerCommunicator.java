@@ -4,10 +4,12 @@ import DomainObjects.*;
 import DomainObjects.Interfaces.IMessageListener;
 import DomainObjects.Interfaces.ITransmittable;
 import Service.Exceptions.PeerNotInitializedException;
+import net.tomp2p.futures.BaseFutureListener;
 import net.tomp2p.futures.FutureDirect;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
 
+import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -16,18 +18,21 @@ public class PeerCommunicator {
 
     private final IMessageListener messageListener;
 
-    public PeerCommunicator(IMessageListener messageListener) throws PeerNotInitializedException {
+    public PeerCommunicator(
+            IMessageListener messageListener) throws PeerNotInitializedException {
         this.messageListener = messageListener;
         PeerHolder.getOwnPeer().peer().objectDataReply(this::receiveTransmittable);
     }
 
-    private static PeerAddress getPeerAddress(Contact contact) throws UnknownHostException {
+    private static PeerAddress getPeerAddress(
+            Contact contact) throws UnknownHostException {
         State contactState = contact.getState();
         InetAddress ipAddress = Inet4Address.getByName(contactState.getIp());
         return new PeerAddress(Number160.createHash(contact.getName()), ipAddress, contactState.getPort(), contactState.getPort());
     }
 
-    private TransmissionConfirmation receiveTransmittable(PeerAddress sender, Object request) {
+    private TransmissionConfirmation receiveTransmittable(PeerAddress sender,
+                                                          Object request) {
         ITransmittable transmittable = (ITransmittable) request;
         new Thread(() -> {
             transmittable.handleReception(messageListener);
@@ -35,10 +40,20 @@ public class PeerCommunicator {
         return new TransmissionConfirmation();
     }
 
-    public boolean sendDirect(Contact receiver, ITransmittable transmittable) throws UnknownHostException, PeerNotInitializedException {
+    public void sendDirect(Contact receiver, ITransmittable transmittable)
+            throws UnknownHostException, PeerNotInitializedException {
         PeerAddress address = getPeerAddress(receiver);
         FutureDirect future = PeerHolder.getOwnPeer().peer().sendDirect(address).object(transmittable).start();
-        future.awaitUninterruptibly();
-        return future.isSuccess();
+        future.addListener(new BaseFutureListener<FutureDirect>() {
+            @Override
+            public void operationComplete(FutureDirect future) {
+                transmittable.handleConfirmation(receiver, messageListener);
+            }
+
+            @Override
+            public void exceptionCaught(Throwable t) {
+                messageListener.receiveThrowable(t);
+            }
+        });
     }
 }
