@@ -40,7 +40,6 @@ public class MessageManager implements IMessageListener {
         }
         Contact receiver = contactManager.getContact(receiverName);
         Message msg = new Message(contactManager.getOwnContact(), message);
-        appendMessageToChatSequence(receiverName, msg);
 
         send(receiver, msg);
     }
@@ -125,6 +124,7 @@ public class MessageManager implements IMessageListener {
     public synchronized void receiveMessageConfirmation(Contact receiver,
                                                         Message message) {
         appendMessageToChatSequence(receiver.getName(), message);
+        messageTransmitter.receiveMessageConfirmation(receiver, message);
     }
 
     @Override

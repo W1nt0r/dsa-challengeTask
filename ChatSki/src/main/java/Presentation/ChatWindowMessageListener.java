@@ -30,7 +30,7 @@ public class ChatWindowMessageListener implements IMessageTransmitter {
 
     @Override
     public void receiveMessageConfirmation(Contact receiver, Message message) {
-
+        Platform.runLater(() -> chatWindow.printReceivedMessage(message));
     }
 
     @Override
