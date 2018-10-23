@@ -10,6 +10,7 @@ import Domainlogic.Exceptions.PeerCreateException;
 import Domainlogic.Exceptions.SendFailedException;
 import Domainlogic.MessageManager;
 import Domainlogic.PeerManager;
+import Presentation.Enums.FormType;
 import Service.Exceptions.DataSaveException;
 import Service.Exceptions.PeerNotInitializedException;
 import Service.PortFinder;
@@ -17,23 +18,15 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.Background;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class ChatWindow extends Application {
@@ -121,126 +114,59 @@ public class ChatWindow extends Application {
         return true;
     }
 
-    private BootstrapInformation askForBootstrapInformation(BootstrapInformation oldInformation) {
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private BootstrapInformation askForBootstrapInformation(
+            BootstrapInformation oldInformation) {
         String oldIp = "";
         String oldPort = "";
         if (oldInformation != null) {
             oldIp = oldInformation.getIpAddress();
             oldPort = String.valueOf(oldInformation.getPort());
         }
-        Stage form = new Stage();
-        GridPane grid = new GridPane();
-        grid.setBackground(Background.EMPTY);
-        grid.setAlignment(Pos.CENTER);
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(25, 25, 25, 25));
 
-        Text scenetitle = new Text("Please enter bootstrap-information:");
-        scenetitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 14));
-        grid.add(scenetitle, 0, 0, 2, 1);
-
-        Label ipLabel = new Label("IP-Address:");
-        grid.add(ipLabel, 0, 1);
-
-        TextField ipField = new TextField();
-        ipField.setText(oldIp);
-        grid.add(ipField, 1, 1);
-
-        Label portLabel = new Label("Port:");
-        grid.add(portLabel, 0, 2);
-
-        TextField portField = new TextField();
-        portField.setText(oldPort);
-        grid.add(portField, 1, 2);
-
-        Button btn = new Button("Send");
-        HBox hbBtn = new HBox(10);
-        hbBtn.setAlignment(Pos.BOTTOM_RIGHT);
-        hbBtn.getChildren().add(btn);
-        grid.add(hbBtn, 1, 3);
-
-        AtomicBoolean sent = new AtomicBoolean(false);
-        btn.setOnAction((e) -> {
-            sent.set(true);
-            form.close();
-        });
-
-        Scene scene = new Scene(grid, 300, 200);
-        form.setScene(scene);
-
-        String ipAddress;
-        int port;
-        do {
-            sent.set(false);
-            form.showAndWait();
-            ipAddress = ipField.getText();
+        Form form = new Form("Bootstrap-Information", "Please enter the " +
+                "Bootstrap information", FormType.SEND);
+        form.addField("ip", "IP-Address", oldIp, s -> {
             try {
-                //noinspection ResultOfMethodCallIgnored
-                InetAddress.getByName(ipAddress);
+                InetAddress.getByName(s);
+                return true;
             } catch (UnknownHostException e) {
-                ipAddress = "";
+                return false;
             }
+        }, "IP-Address must be valid");
+
+        form.addField("port", "Port", oldPort, s -> {
             try {
-                port = Integer.parseInt(portField.getText());
+                Integer.parseInt(s);
+                return true;
             } catch (NumberFormatException e) {
-                port = -1;
+                return false;
             }
-        } while (sent.get() && (ipAddress.trim().isEmpty() || port == -1));
+        }, "Port must be a number");
 
-        if (!sent.get()) {
-            stop();
+        if (!form.showAndWait()) {
             return null;
+        } else {
+            String ipAddress = form.getFieldText("ip");
+            int port = Integer.parseInt(form.getFieldText("port"));
+            return new BootstrapInformation(ipAddress, port);
         }
-
-        return new BootstrapInformation(ipAddress, port);
     }
 
     private boolean initContacts() throws DataSaveException {
         contactManager = new ContactManager();
         if (contactManager.isOwnContactEmpty()) {
-            Stage form = new Stage();
-            GridPane grid = new GridPane();
-            grid.setBackground(Background.EMPTY);
-            grid.setAlignment(Pos.CENTER);
-            grid.setHgap(10);
-            grid.setVgap(10);
-            grid.setPadding(new Insets(25, 25, 25, 25));
+            Form form = new Form("Username", "Please enter your username", FormType.SEND);
+            form.addField("username", "Username", s -> !s.trim().isEmpty(),
+                    "Username must not be empty");
 
-            Text scenetitle = new Text("Please enter your name:");
-            scenetitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 14));
-            grid.add(scenetitle, 0, 0, 2, 1);
+            boolean result = form.showAndWait();
 
-            TextField usernameField = new TextField();
-            usernameField.setPrefWidth(450);
-            grid.add(usernameField, 0, 1, 2, 1);
-
-            AtomicBoolean sent = new AtomicBoolean(false);
-            Button btn = new Button("Send");
-            HBox hbBtn = new HBox(10);
-            hbBtn.setAlignment(Pos.BOTTOM_RIGHT);
-            hbBtn.getChildren().add(btn);
-            grid.add(hbBtn, 1, 2);
-            btn.setOnAction((e) -> {
-                sent.set(true);
-                form.close();
-            });
-
-            Scene scene = new Scene(grid, 500, 130);
-            form.setScene(scene);
-
-            String username;
-            do {
-                sent.set(false);
-                form.showAndWait();
-                username = usernameField.getText();
-            } while (sent.get() && username.trim().isEmpty());
-
-            if (!sent.get()) {
+            if (!result) {
                 return false;
             }
 
-            contactManager.setOwnContactName(username);
+            contactManager.setOwnContactName(form.getFieldText("username"));
         }
         return true;
     }
@@ -250,43 +176,13 @@ public class ChatWindow extends Application {
     }
 
     public void showContactRequest(Contact sender) {
-        AtomicBoolean accepted = new AtomicBoolean(false);
-
-        Stage form = new Stage();
-
-        GridPane grid = new GridPane();
-        grid.setBackground(Background.EMPTY);
-        grid.setAlignment(Pos.CENTER);
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(25, 25, 25, 25));
-
-        Text scenetitle = new Text(sender.getName() + " sent you a contact-request");
-        scenetitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 14));
-        grid.add(scenetitle, 0, 0, 2, 1);
-
-        Button acceptButton = new Button("Accept");
-        Button rejectButton = new Button("Reject");
-        HBox hbBtn = new HBox(10);
-        hbBtn.setAlignment(Pos.BOTTOM_RIGHT);
-        hbBtn.getChildren().add(acceptButton);
-        hbBtn.getChildren().add(rejectButton);
-        grid.add(hbBtn, 1, 2);
-        acceptButton.setOnAction((e) -> {
-            form.close();
-            accepted.set(true);
-        });
-        rejectButton.setOnAction((e) -> form.close());
-
-        Scene scene = new Scene(grid, 500, 100);
-        form.setScene(scene);
-        form.showAndWait();
-
+        Form form = new Form("Contact-Request", sender.getName() + " sent you" +
+                " a contact-request", FormType.DECISION);
+        boolean accepted = form.showAndWait();
         try {
-            boolean success = messageManager.sendContactResponse(sender, accepted.get());
-            if (success && accepted.get()) {
+            boolean success = messageManager.sendContactResponse(sender, accepted);
+            if (success && accepted) {
                 loadKnownContacts();
-
             }
         } catch (SendFailedException | PeerNotInitializedException e) {
             showException(e);
@@ -295,7 +191,8 @@ public class ChatWindow extends Application {
 
     public void showContactResponse(Contact sender, boolean accepted) {
         loadKnownContacts();
-        showInformation(sender.getName() + " " + (accepted ? "accepted" : "rejected") + " your request");
+        showInformation("Request confirmation",
+                sender.getName() + " " + (accepted ? "accepted" : "rejected") + " your request");
     }
 
     private void loadKnownContacts() {
@@ -368,37 +265,19 @@ public class ChatWindow extends Application {
     }
 
     private void addContact() {
-        Stage form = new Stage();
-        GridPane grid = new GridPane();
-        grid.setBackground(Background.EMPTY);
-        grid.setAlignment(Pos.CENTER);
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(25, 25, 25, 25));
+        Form newForm = new Form("Add Contact", "Please enter the username of " +
+                "the contact", FormType.SEND);
+        newForm.addField("username", "username", s -> !s.trim().isEmpty(),
+                "Username must not be empty");
+        boolean result = newForm.showAndWait();
 
-        Text scenetitle = new Text("Please enter contact name:");
-        scenetitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 14));
-        grid.add(scenetitle, 0, 0, 2, 1);
-
-        TextField usernameField = new TextField();
-        usernameField.setPrefWidth(450);
-        grid.add(usernameField, 0, 1, 2, 1);
-
-        Button btn = new Button("Send");
-        HBox hbBtn = new HBox(10);
-        hbBtn.setAlignment(Pos.BOTTOM_RIGHT);
-        hbBtn.getChildren().add(btn);
-        grid.add(hbBtn, 1, 2);
-        btn.setOnAction((e) -> form.close());
-
-        Scene scene = new Scene(grid, 500, 130);
-        form.setScene(scene);
-        form.showAndWait();
-
-        try {
-            messageManager.sendContactRequest(usernameField.getText());
-        } catch (PeerNotInitializedException | SendFailedException e) {
-            showException(e);
+        if (result) {
+            try {
+                messageManager.sendContactRequest(newForm.getFieldText(
+                        "username"));
+            } catch (PeerNotInitializedException | SendFailedException e) {
+                showException(e);
+            }
         }
     }
 
@@ -408,10 +287,8 @@ public class ChatWindow extends Application {
         e.printStackTrace();
     }
 
-    public void showInformation(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, message, ButtonType.OK);
-        alert.showAndWait();
+    public void showInformation(String title, String message) {
+        Form form = new Form(title, message, FormType.OK);
+        form.showAndWait();
     }
 }
-
-
