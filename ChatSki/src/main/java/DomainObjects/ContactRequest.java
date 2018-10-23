@@ -17,4 +17,10 @@ public class ContactRequest implements Serializable, ITransmittable {
     public void handleReception(IMessageListener listener) {
         listener.receiveContactRequest(sender);
     }
+
+    @Override
+    public void handleConfirmation(Contact receiver,
+                                   IMessageListener listener) {
+        listener.receiveContactRequestConfirmation(receiver);
+    }
 }

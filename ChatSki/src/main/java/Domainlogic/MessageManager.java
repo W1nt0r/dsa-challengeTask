@@ -24,49 +24,45 @@ public class MessageManager implements IMessageListener {
     private final ContactManager contactManager;
     private final Map<String, ChatSequence> activeChats;
 
-    public MessageManager(IMessageTransmitter messageListener, ContactManager contactManager) throws PeerNotInitializedException {
+    public MessageManager(IMessageTransmitter messageListener,
+                          ContactManager contactManager) throws PeerNotInitializedException {
         this.messageTransmitter = messageListener;
         this.contactManager = contactManager;
         communicator = new PeerCommunicator(this);
         activeChats = new HashMap<>();
     }
 
-    public boolean sendMessage(String receiverName, String message) throws NotInContactListException, SendFailedException, PeerNotInitializedException {
+    public synchronized void sendMessage(String receiverName,
+                                         String message) throws NotInContactListException, SendFailedException, PeerNotInitializedException {
         if (!contactManager.isContact(receiverName)) {
             throw new NotInContactListException();
         }
         Contact receiver = contactManager.getContact(receiverName);
         Message msg = new Message(contactManager.getOwnContact(), message);
-        appendMessageToChatSequence(receiverName, msg);
 
-        return send(receiver, msg);
+        send(receiver, msg);
     }
 
     public synchronized List<Message> getChatHistory(String username) {
         return activeChats.get(username).getChatMessages();
     }
 
-    public boolean sendContactResponse(Contact receiver, boolean accepted) throws PeerNotInitializedException, SendFailedException {
+    public synchronized void sendContactResponse(Contact receiver,
+                                                 boolean accepted) throws PeerNotInitializedException, SendFailedException {
         ContactResponse response = new ContactResponse(contactManager.getOwnContact(), accepted);
-        boolean sent = send(receiver, response);
-        if (sent && accepted) {
-            try {
-                contactManager.addContact(receiver.getName());
-            } catch (DataSaveException e) {
-                messageTransmitter.showException(e);
-            }
-        }
-        return sent;
+        send(receiver, response);
     }
 
-    public boolean sendContactRequest(String receiver) throws PeerNotInitializedException, SendFailedException {
+    public synchronized void sendContactRequest(
+            String receiver) throws PeerNotInitializedException, SendFailedException {
         ContactRequest request = new ContactRequest(contactManager.getOwnContact());
         Contact receiverContact = contactManager.createContactFromName(receiver);
 
-        return send(receiverContact, request);
+        send(receiverContact, request);
     }
 
-    private boolean send(Contact receiver, ITransmittable transmittable) throws SendFailedException, PeerNotInitializedException {
+    private void send(Contact receiver,
+                      ITransmittable transmittable) throws SendFailedException, PeerNotInitializedException {
         try {
             State receiverState = StateService.LoadStateFromDht(receiver.getName());
 
@@ -75,8 +71,7 @@ public class MessageManager implements IMessageListener {
             }
 
             receiver.setState(receiverState);
-            boolean sendResult = communicator.sendDirect(receiver, transmittable);
-            return sendResult;
+            communicator.sendDirect(receiver, transmittable);
         } catch (UnknownHostException ex) {
             throw new SendFailedException();
         } catch (PeerNotAvailableException ex) {
@@ -88,8 +83,9 @@ public class MessageManager implements IMessageListener {
         return activeChats.containsKey(username);
     }
 
-    private synchronized void appendMessageToChatSequence(String username, Message message) {
-        if(!isChatActive(username)) {
+    private synchronized void appendMessageToChatSequence(String username,
+                                                          Message message) {
+        if (!isChatActive(username)) {
             activeChats.put(username, new ChatSequence());
         }
 
@@ -97,26 +93,57 @@ public class MessageManager implements IMessageListener {
     }
 
     @Override
-    public void receiveMessage(Contact sender, Message message) {
+    public synchronized void receiveMessage(Contact sender, Message message) {
         appendMessageToChatSequence(sender.getName(), message);
 
         messageTransmitter.receiveMessage(sender, message.getMessage());
     }
 
     @Override
-    public void receiveContactRequest(Contact sender) {
+    public synchronized void receiveContactRequest(Contact sender) {
         messageTransmitter.receiveContactRequest(sender);
     }
 
     @Override
-    public void receiveContactResponse(Contact sender, boolean accepted) {
+    public synchronized void receiveContactResponse(Contact sender,
+                                                    boolean accepted) {
         messageTransmitter.receiveContactResponse(sender, accepted);
         if (accepted) {
             try {
                 contactManager.addContact(sender.getName());
             } catch (DataSaveException e) {
-                messageTransmitter.showException(e);
+                messageTransmitter.showThrowable(e);
             }
         }
+    }
+
+    @Override
+    public synchronized void receiveMessageConfirmation(Contact receiver,
+                                                        Message message) {
+        appendMessageToChatSequence(receiver.getName(), message);
+    }
+
+    @Override
+    public synchronized void receiveContactRequestConfirmation(
+            Contact receiver) {
+        System.out.println("Received contact request confirmation");
+    }
+
+    @Override
+    public synchronized void receiveContactResponseConfirmation(
+            Contact receiver, boolean accepted) {
+        if (accepted) {
+            try {
+                contactManager.addContact(receiver.getName());
+                messageTransmitter.receiveContactResponseConfirmation(receiver, accepted);
+            } catch (DataSaveException e) {
+                messageTransmitter.showThrowable(e);
+            }
+        }
+    }
+
+    @Override
+    public synchronized void receiveThrowable(Throwable t) {
+        messageTransmitter.showThrowable(t);
     }
 }

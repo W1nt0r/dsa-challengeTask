@@ -1,8 +1,8 @@
 package Presentation;
 
 import DomainObjects.Contact;
-import DomainObjects.Interfaces.IMessageListener;
 import DomainObjects.Interfaces.IMessageTransmitter;
+import DomainObjects.Message;
 import javafx.application.Platform;
 
 public class ChatWindowMessageListener implements IMessageTransmitter {
@@ -29,7 +29,25 @@ public class ChatWindowMessageListener implements IMessageTransmitter {
     }
 
     @Override
-    public void showException(Exception e) {
-        chatWindow.showException(e);
+    public void receiveMessageConfirmation(Contact receiver, Message message) {
+
+    }
+
+    @Override
+    public void receiveContactRequestConfirmation(Contact receiver) {
+
+    }
+
+    @Override
+    public void receiveContactResponseConfirmation(Contact receiver,
+                                                   boolean accepted) {
+        if (accepted) {
+            Platform.runLater(() -> chatWindow.refreshContactList());
+        }
+    }
+
+    @Override
+    public void showThrowable(Throwable t) {
+        chatWindow.showThrowable(t);
     }
 }

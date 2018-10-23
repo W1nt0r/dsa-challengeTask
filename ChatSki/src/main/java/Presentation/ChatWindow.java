@@ -55,7 +55,7 @@ public class ChatWindow extends Application {
         try {
             initialized = initialize();
         } catch (Exception e) {
-            showException(e);
+            showThrowable(e);
         }
 
         if (!initialized) {
@@ -180,12 +180,12 @@ public class ChatWindow extends Application {
                 " a contact-request", FormType.DECISION);
         boolean accepted = form.showAndWait();
         try {
-            boolean success = messageManager.sendContactResponse(sender, accepted);
-            if (success && accepted) {
+            messageManager.sendContactResponse(sender, accepted);
+            /*if (success && accepted) {
                 loadKnownContacts();
-            }
+            }*/
         } catch (SendFailedException | PeerNotInitializedException e) {
-            showException(e);
+            showThrowable(e);
         }
     }
 
@@ -260,7 +260,7 @@ public class ChatWindow extends Application {
             loadKnownContacts();
             messageManager.sendMessage(contactManager.getOwnContact().getName(), messageField.getText());
         } catch (Exception ex) {
-            showException(ex);
+            showThrowable(ex);
         }
     }
 
@@ -276,15 +276,19 @@ public class ChatWindow extends Application {
                 messageManager.sendContactRequest(newForm.getFieldText(
                         "username"));
             } catch (PeerNotInitializedException | SendFailedException e) {
-                showException(e);
+                showThrowable(e);
             }
         }
     }
 
-    public void showException(Exception e) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, "ChatSki threw the following exception:\n" + e.getMessage(), ButtonType.OK);
+    public void showThrowable(Throwable t) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, "ChatSki threw the following exception:\n" + t.getMessage(), ButtonType.OK);
         alert.showAndWait();
-        e.printStackTrace();
+        t.printStackTrace();
+    }
+
+    public void refreshContactList() {
+        loadKnownContacts();
     }
 
     public void showInformation(String title, String message) {
