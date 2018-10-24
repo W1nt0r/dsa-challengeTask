@@ -187,7 +187,10 @@ public class ChatWindow extends Application {
     }
 
     public void printReceivedMessage(Message message) {
-        messages.add(message);
+        if (message.getSender().equals(activeChat) ||
+                contactManager.getOwnContact().equals(message.getSender())) {
+            messages.add(message);
+        }
     }
 
     public void showContactRequest(Contact sender) {

@@ -34,4 +34,8 @@ public class Message implements Serializable, ITransmittable {
     public String getMessage() {
         return message;
     }
+
+    public Contact getSender() {
+        return sender;
+    }
 }
