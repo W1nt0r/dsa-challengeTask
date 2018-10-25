@@ -1,9 +1,7 @@
 package Presentation;
 
-import DomainObjects.BootstrapInformation;
-import DomainObjects.Contact;
-import DomainObjects.Message;
-import DomainObjects.State;
+import DomainObjects.*;
+import DomainObjects.Interfaces.ICollocutor;
 import Domainlogic.BootstrapManager;
 import Domainlogic.ContactManager;
 import Domainlogic.Exceptions.NetworkJoinException;
@@ -44,7 +42,7 @@ public class ChatWindow extends Application {
 
     private Stage stage;
     private BorderPane rootBorderPane = new BorderPane();
-    private TableView<Contact> contactTable = new TableView<>();
+    private ListView<ICollocutor> contactTable = new ListView<>();
     private ListView<Message> messageListView = new ListView<>();
     private Button sendButton = new Button("Send");
     private Button addContactButton = new Button("Add Contact");
@@ -52,7 +50,7 @@ public class ChatWindow extends Application {
     private ChatWindowListener chatWindowListener =
             new ChatWindowListener(this);
 
-    private ObservableList<Contact> contactItems = FXCollections.observableArrayList();
+    private ObservableList<ICollocutor> contactItems = FXCollections.observableArrayList();
     private ObservableList<Message> messages = FXCollections.observableArrayList();
     private ContactManager contactManager;
     private MessageManager messageManager;
@@ -258,20 +256,20 @@ public class ChatWindow extends Application {
     private void loadKnownContacts() {
         contactItems.clear();
 
-        TableColumn<Contact, String> nameCol = new TableColumn<>("Name");
-        nameCol.setCellValueFactory(new PropertyValueFactory<>("Name"));
-        TableColumn<Contact, Boolean> onlineCol = new TableColumn<>("isOnline");
-        onlineCol.setCellValueFactory(new PropertyValueFactory<>("Online"));
-
-        TableColumn<Contact, String> ipCol = new TableColumn<>("IP");
-        ipCol.setCellValueFactory(new PropertyValueFactory<>("Ip"));
+//        TableColumn<Contact, String> nameCol = new TableColumn<>("Name");
+//        nameCol.setCellValueFactory(new PropertyValueFactory<>("Name"));
+//        TableColumn<Contact, Boolean> onlineCol = new TableColumn<>("isOnline");
+//        onlineCol.setCellValueFactory(new PropertyValueFactory<>("Online"));
+//
+//        TableColumn<Contact, String> ipCol = new TableColumn<>("IP");
+//        ipCol.setCellValueFactory(new PropertyValueFactory<>("Ip"));
 
         contactItems.addAll(contactManager.getContactList());
 
-        contactTable = new TableView<>();
-        contactTable.getColumns().add(nameCol);
-        contactTable.getColumns().add(onlineCol);
-        contactTable.getColumns().add(ipCol);
+//        contactTable = new TableView<>();
+//        contactTable.getColumns().add(nameCol);
+//        contactTable.getColumns().add(onlineCol);
+//        contactTable.getColumns().add(ipCol);
         contactTable.setItems(contactItems);
     }
 
@@ -311,7 +309,9 @@ public class ChatWindow extends Application {
         rootBorderPane.setRight(borderPane);
 
         contactTable.getSelectionModel().selectedItemProperty()
-                .addListener((observable, oldSelected, newSelected) -> showContactConversation(newSelected));
+                .addListener((observable, oldSelected, newSelected) -> showContactConversation((Contact)newSelected));
+
+        contactTable.setCellFactory(new ContactCellFactory());
     }
 
     private void showContactConversation(Contact contact) {
