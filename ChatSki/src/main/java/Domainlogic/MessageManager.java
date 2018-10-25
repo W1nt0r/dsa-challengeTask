@@ -13,12 +13,11 @@ import Service.PeerCommunicator;
 import Service.StateService;
 
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MessageManager implements IMessageListener {
+
+    private static final String GROUP_CREATION_MESSAGE = "%s created group %s";
 
     private final IMessageTransmitter messageTransmitter;
     private final IStateListener stateListener;
@@ -67,8 +66,29 @@ public class MessageManager implements IMessageListener {
         send(receiverContact, request);
     }
 
+    public synchronized void sendGroupCreation(String groupName,
+                                               Set<Contact> members) throws PeerNotInitializedException {
+        Contact ownContact = contactManager.getOwnContact();
+        String firstMessage = String.format(GROUP_CREATION_MESSAGE,
+                ownContact.getName(), groupName);
+        members.add(ownContact);
+        Group newGroup = new Group(groupName, members);
+        sendGroupMessage(newGroup, firstMessage);
+    }
+
+    public synchronized void sendGroupMessage(Group group, String message) throws PeerNotInitializedException {
+        Contact ownContact = contactManager.getOwnContact();
+        GroupMessage groupMessage = new GroupMessage(group, ownContact,
+                message);
+        for (Contact receiver : group.getMembers()) {
+            if (!receiver.equals(ownContact)) {
+                send(receiver, groupMessage);
+            }
+        }
+    }
+
     private synchronized void send(Contact receiver,
-                      ITransmittable transmittable) throws PeerNotInitializedException {
+                                   ITransmittable transmittable) throws PeerNotInitializedException {
         StateService.LoadStateFromDht(receiver.getName(),
                 state -> send(receiver, state, transmittable), stateListener::showThrowable);
     }
@@ -134,6 +154,11 @@ public class MessageManager implements IMessageListener {
     }
 
     @Override
+    public void receiveGroupMessage(GroupMessage message) {
+        messageTransmitter.receiveGroupMessage(message);
+    }
+
+    @Override
     public synchronized void receiveMessageConfirmation(Contact receiver,
                                                         Message message) {
         appendMessageToChatSequence(receiver.getName(), message);
@@ -157,6 +182,12 @@ public class MessageManager implements IMessageListener {
                 messageTransmitter.showThrowable(e);
             }
         }
+    }
+
+    @Override
+    public void receiveGroupMessageConfirmation(Contact receiver,
+                                                GroupMessage message) {
+
     }
 
     @Override

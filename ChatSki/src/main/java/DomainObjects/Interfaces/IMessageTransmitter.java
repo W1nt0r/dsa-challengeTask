@@ -1,6 +1,7 @@
 package DomainObjects.Interfaces;
 
 import DomainObjects.Contact;
+import DomainObjects.GroupMessage;
 import DomainObjects.Message;
 
 public interface IMessageTransmitter {
@@ -9,6 +10,8 @@ public interface IMessageTransmitter {
     void receiveContactRequest(Contact sender);
 
     void receiveContactResponse(Contact sender, boolean accepted);
+
+    void receiveGroupMessage(GroupMessage message);
 
     void receiveMessageConfirmation(Contact receiver, Message message);
 

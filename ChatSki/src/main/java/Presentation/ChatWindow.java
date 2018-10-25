@@ -17,11 +17,12 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
@@ -46,6 +47,7 @@ public class ChatWindow extends Application {
     private ListView<ICollocutor> contactTable = new ListView<>();
     private ListView<Message> messageListView = new ListView<>();
     private Button sendButton = new Button("Send");
+    private Button addGroupButton = new Button("Add Group");
     private Button addContactButton = new Button("Add Contact");
     private TextField messageField = new TextField();
     private ChatWindowListener chatWindowListener =
@@ -167,7 +169,7 @@ public class ChatWindow extends Application {
             }
             bootstrapManager.setBootstrapInfo(info);
         }
-        contactManager.writeOwnStateToDHT(STARTUP_STATE,true);
+        contactManager.writeOwnStateToDHT(STARTUP_STATE, true);
         return true;
     }
 
@@ -235,6 +237,11 @@ public class ChatWindow extends Application {
         }
     }
 
+    public void printReceivedGroupMessage(GroupMessage message) {
+        showInformation("Groupmessage " + message.getGroup().getName(),
+                message.getSender().getName() + " sent:\n" + message.getMessage());
+    }
+
     public void showContactRequest(Contact sender) {
         Form form = new Form("Contact-Request", sender.getName() + " sent you" +
                 " a contact-request", FormType.DECISION);
@@ -285,6 +292,7 @@ public class ChatWindow extends Application {
         messageListView.setItems(messages);
         sendButton.setOnMouseClicked((event) -> sendMessage());
         addContactButton.setOnAction((event) -> addContact());
+        addGroupButton.setOnAction((event) -> addGroup());
 
         messageField.setOnKeyPressed(event -> {
             if (event.getCode().equals(KeyCode.ENTER)) {
@@ -305,8 +313,10 @@ public class ChatWindow extends Application {
     }
 
     private void initRightPane() {
-        BorderPane rightBottomPane = new BorderPane();
-        rightBottomPane.setRight(addContactButton);
+        HBox rightBottomPane = new HBox(10);
+        rightBottomPane.setAlignment(Pos.BOTTOM_RIGHT);
+        rightBottomPane.getChildren().add(addGroupButton);
+        rightBottomPane.getChildren().add(addContactButton);
 
         BorderPane borderPane = new BorderPane();
         borderPane.setPadding(new Insets(10));
@@ -344,6 +354,17 @@ public class ChatWindow extends Application {
             }
         } catch (Exception ex) {
             showThrowable(ex);
+        }
+    }
+
+    private void addGroup() {
+        GroupSelectionForm form = new GroupSelectionForm("Add group", contactManager.getContactList());
+        if (form.showAndWait()) {
+            try {
+                messageManager.sendGroupCreation(form.getGroupName(), form.getGroupMembers());
+            } catch (PeerNotInitializedException e) {
+                showThrowable(e);
+            }
         }
     }
 

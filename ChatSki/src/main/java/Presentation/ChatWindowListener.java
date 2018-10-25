@@ -1,6 +1,7 @@
 package Presentation;
 
 import DomainObjects.Contact;
+import DomainObjects.GroupMessage;
 import DomainObjects.Interfaces.IMessageTransmitter;
 import DomainObjects.Interfaces.IPeerListener;
 import DomainObjects.Interfaces.IStateListener;
@@ -29,6 +30,11 @@ public class ChatWindowListener implements IMessageTransmitter,
     @Override
     public void receiveContactResponse(Contact sender, boolean accepted) {
         Platform.runLater(() -> chatWindow.showContactResponse(sender, accepted));
+    }
+
+    @Override
+    public void receiveGroupMessage(GroupMessage message) {
+        Platform.runLater(() -> chatWindow.printReceivedGroupMessage(message));
     }
 
     @Override
