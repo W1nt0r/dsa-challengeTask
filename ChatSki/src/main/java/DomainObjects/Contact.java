@@ -1,9 +1,11 @@
 package DomainObjects;
 
+import DomainObjects.Interfaces.ICollocutor;
+
 import java.io.Serializable;
 import java.util.Objects;
 
-public class Contact implements Serializable {
+public class Contact implements Serializable, ICollocutor {
 
     private String name;
     private State state;
