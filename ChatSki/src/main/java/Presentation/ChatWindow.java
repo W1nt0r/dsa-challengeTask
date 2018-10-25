@@ -20,6 +20,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -285,6 +286,12 @@ public class ChatWindow extends Application {
         sendButton.setOnMouseClicked((event) -> sendMessage());
         addContactButton.setOnAction((event) -> addContact());
 
+        messageField.setOnKeyPressed(event -> {
+            if (event.getCode().equals(KeyCode.ENTER)) {
+                sendMessage();
+            }
+        });
+
         BorderPane leftBottomPane = new BorderPane();
         leftBottomPane.setRight(sendButton);
         leftBottomPane.setLeft(messageField);
@@ -328,12 +335,13 @@ public class ChatWindow extends Application {
     private void sendMessage() {
         try {
             if (activeChat != null) {
-                messageManager.sendMessage(activeChat.getName(), messageField.getText());
+                String messageText = messageField.getText();
+                messageField.clear();
+                messageManager.sendMessage(activeChat.getName(), messageText);
             } else {
-                showInformation("No Contacts available", "You should add some contacts to your contact list.");
+                showInformation("No Contacts chosen", "Please chose a " +
+                        "contact or add a new one.");
             }
-
-
         } catch (Exception ex) {
             showThrowable(ex);
         }
