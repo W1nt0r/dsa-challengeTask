@@ -19,6 +19,9 @@ public class Bootstrap {
     public static void main(String[] args) throws IOException {
         final String bootstrapId = "BOOTSTRAP_PEER_ID";
         final int bootstrapPort = 4000;
-        PeerCreator.CreatePeer(bootstrapId, bootstrapPort);
+        PeerDHT bootstrapNode = PeerCreator.CreatePeer(bootstrapId,
+                bootstrapPort);
+        System.out.println("IP-Address: " + bootstrapNode.peerAddress().inetAddress());
+        System.out.println("Port: " + bootstrapPort);
     }
 }
