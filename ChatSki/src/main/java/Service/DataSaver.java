@@ -48,10 +48,10 @@ public class DataSaver<T extends Serializable> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public T loadData() throws FileNotFoundException, DataSaveException {
         try (FileInputStream inputStream = new FileInputStream(filePath)) {
             try (ObjectInputStream objectInputStream = new ObjectInputStream((inputStream))) {
-                //noinspection unchecked
                 return (T)objectInputStream.readObject();
             } catch (IOException|ClassNotFoundException e) {
                 throw new DataSaveException("Could not read from file");

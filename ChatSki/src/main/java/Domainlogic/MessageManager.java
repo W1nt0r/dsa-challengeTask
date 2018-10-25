@@ -2,11 +2,11 @@ package Domainlogic;
 
 import DomainObjects.*;
 import DomainObjects.Interfaces.IMessageTransmitter;
+import DomainObjects.Interfaces.IStateListener;
 import DomainObjects.Interfaces.ITransmittable;
 import Domainlogic.Exceptions.NotInContactListException;
 import Domainlogic.Exceptions.SendFailedException;
 import Service.Exceptions.DataSaveException;
-import Service.Exceptions.PeerNotAvailableException;
 import Service.Exceptions.PeerNotInitializedException;
 import DomainObjects.Interfaces.IMessageListener;
 import Service.PeerCommunicator;
@@ -21,20 +21,23 @@ import java.util.Map;
 public class MessageManager implements IMessageListener {
 
     private final IMessageTransmitter messageTransmitter;
+    private final IStateListener stateListener;
     private final PeerCommunicator communicator;
     private final ContactManager contactManager;
     private final Map<String, ChatSequence> activeChats;
 
     public MessageManager(IMessageTransmitter messageListener,
+                          IStateListener stateListener,
                           ContactManager contactManager) throws PeerNotInitializedException {
         this.messageTransmitter = messageListener;
+        this.stateListener = stateListener;
         this.contactManager = contactManager;
         communicator = new PeerCommunicator(this);
         activeChats = new HashMap<>();
     }
 
     public synchronized void sendMessage(String receiverName,
-                                         String message) throws NotInContactListException, SendFailedException, PeerNotInitializedException {
+                                         String message) throws NotInContactListException, PeerNotInitializedException {
         if (!contactManager.isContact(receiverName)) {
             throw new NotInContactListException();
         }
@@ -51,35 +54,45 @@ public class MessageManager implements IMessageListener {
     }
 
     public synchronized void sendContactResponse(Contact receiver,
-                                                 boolean accepted) throws PeerNotInitializedException, SendFailedException {
+                                                 boolean accepted) throws PeerNotInitializedException {
         ContactResponse response = new ContactResponse(contactManager.getOwnContact(), accepted);
         send(receiver, response);
     }
 
     public synchronized void sendContactRequest(
-            String receiver) throws PeerNotInitializedException, SendFailedException {
+            String receiver) throws PeerNotInitializedException {
         ContactRequest request = new ContactRequest(contactManager.getOwnContact());
         Contact receiverContact = contactManager.createContactFromName(receiver);
 
         send(receiverContact, request);
     }
 
-    private void send(Contact receiver,
-                      ITransmittable transmittable) throws SendFailedException, PeerNotInitializedException {
-        try {
-            State receiverState = StateService.LoadStateFromDht(receiver.getName());
+    private synchronized void send(Contact receiver,
+                      ITransmittable transmittable) throws PeerNotInitializedException {
+        StateService.LoadStateFromDht(receiver.getName(),
+                state -> send(receiver, state, transmittable), stateListener::showThrowable);
+    }
 
-            if (!receiverState.isOnline()) {
-                throw new SendFailedException("Peer is not online");
-            }
-
-            receiver.setState(receiverState);
-            communicator.sendDirect(receiver, transmittable);
-        } catch (UnknownHostException ex) {
-            throw new SendFailedException();
-        } catch (PeerNotAvailableException ex) {
-            throw new SendFailedException("Peer is not online");
+    private void send(Contact receiver, State currentState,
+                      ITransmittable transmittable) {
+        updateState(receiver, currentState);
+        if (currentState == null || !currentState.isOnline()) {
+            messageTransmitter.showThrowable(new SendFailedException("Peer is not online"));
+            return;
         }
+        try {
+            communicator.sendDirect(receiver, transmittable);
+        } catch (UnknownHostException e) {
+            messageTransmitter.showThrowable(new SendFailedException("Unknown" +
+                    " IP"));
+        } catch (PeerNotInitializedException e) {
+            messageTransmitter.showThrowable(e);
+        }
+    }
+
+    private void updateState(Contact contact, State newState) {
+        contact.setState(newState);
+        stateListener.updateContactState(contact);
     }
 
     private synchronized boolean isChatActive(String username) {

@@ -8,12 +8,12 @@ import Domainlogic.BootstrapManager;
 import Domainlogic.ContactManager;
 import Domainlogic.Exceptions.NetworkJoinException;
 import Domainlogic.Exceptions.PeerCreateException;
-import Domainlogic.Exceptions.SendFailedException;
 import Domainlogic.MessageManager;
 import Domainlogic.PeerManager;
 import Presentation.Enums.FormType;
 import Service.Exceptions.DataSaveException;
 import Service.Exceptions.PeerNotInitializedException;
+import Service.Exceptions.ReplicationException;
 import Service.PortFinder;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -23,6 +23,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -37,12 +39,18 @@ public class ChatWindow extends Application {
         launch(args);
     }
 
+    private final static String SHUTDOWN_STATE = "shutdown-state";
+    private final static String STARTUP_STATE = "startup-state";
+
+    private Stage stage;
     private BorderPane rootBorderPane = new BorderPane();
     private TableView<Contact> contactTable = new TableView<>();
     private ListView<Message> messageListView = new ListView<>();
     private Button sendButton = new Button("Send");
     private Button addContactButton = new Button("Add Contact");
     private TextField messageField = new TextField();
+    private ChatWindowListener chatWindowListener =
+            new ChatWindowListener(this);
 
     private ObservableList<Contact> contactItems = FXCollections.observableArrayList();
     private ObservableList<Message> messages = FXCollections.observableArrayList();
@@ -52,6 +60,8 @@ public class ChatWindow extends Application {
 
     @Override
     public void start(Stage stage) {
+        this.stage = stage;
+
         rootBorderPane.setPadding(new Insets(10));
 
         boolean initialized = false;
@@ -62,7 +72,6 @@ public class ChatWindow extends Application {
         }
 
         if (!initialized) {
-            stop();
             return;
         }
 
@@ -74,20 +83,54 @@ public class ChatWindow extends Application {
         stage.setResizable(false);
         stage.setTitle("ChatSki - " + contactManager.getOwnContact().getName());
         stage.setScene(scene);
+        stage.setOnCloseRequest(e -> {
+            showShutDown();
+            e.consume();
+        });
         stage.show();
     }
 
-    @Override
-    public void stop() {
-        PeerManager.closePeer();
+    private void clearRootBorderPane() {
+        rootBorderPane.setTop(null);
+        rootBorderPane.setLeft(null);
+        rootBorderPane.setBottom(null);
+        rootBorderPane.setRight(null);
+        rootBorderPane.setCenter(null);
     }
 
-    private boolean initialize() throws PeerCreateException, NetworkJoinException, DataSaveException, PeerNotInitializedException, IOException {
+    private void showShutDown() {
+        clearRootBorderPane();
+        Label shutDownLabel = new Label("Shutting down...");
+        shutDownLabel.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 18));
+        rootBorderPane.setCenter(shutDownLabel);
+
+        try {
+            contactManager.writeOwnStateToDHT(SHUTDOWN_STATE, false);
+        } catch (PeerNotInitializedException | ReplicationException e) {
+            showThrowable(e);
+        }
+    }
+
+    private void close() {
+        if (PeerManager.isPeerInitialized()) {
+            PeerManager.closePeer(chatWindowListener);
+        } else {
+            closeApplication();
+        }
+    }
+
+    public void closeApplication() {
+        stage.close();
+    }
+
+    private boolean initialize() throws PeerCreateException, NetworkJoinException, DataSaveException, PeerNotInitializedException, IOException, ReplicationException {
         if (!initContacts() || !initPeer()) {
             return false;
         }
-        messageManager = new MessageManager(new ChatWindowMessageListener(this), contactManager);
+        messageManager = new MessageManager(chatWindowListener, chatWindowListener,
+                contactManager);
         loadKnownContacts();
+        contactManager.updateStates();
 
         initializeActiveChat();
 
@@ -103,7 +146,7 @@ public class ChatWindow extends Application {
         }
     }
 
-    private boolean initPeer() throws DataSaveException, PeerCreateException, NetworkJoinException, IOException, PeerNotInitializedException {
+    private boolean initPeer() throws DataSaveException, PeerCreateException, NetworkJoinException, IOException, PeerNotInitializedException, ReplicationException {
         BootstrapManager bootstrapManager = new BootstrapManager();
 
         if (bootstrapManager.isBootstrapInfoEmpty()) {
@@ -125,7 +168,7 @@ public class ChatWindow extends Application {
             }
             bootstrapManager.setBootstrapInfo(info);
         }
-        contactManager.writeOwnStateToDHT(true);
+        contactManager.writeOwnStateToDHT(STARTUP_STATE,true);
         return true;
     }
 
@@ -169,7 +212,7 @@ public class ChatWindow extends Application {
     }
 
     private boolean initContacts() throws DataSaveException {
-        contactManager = new ContactManager();
+        contactManager = new ContactManager(chatWindowListener);
         if (contactManager.isOwnContactEmpty()) {
             Form form = new Form("Username", "Please enter your username", FormType.SEND);
             form.addField("username", "Username", s -> !s.trim().isEmpty(),
@@ -196,22 +239,20 @@ public class ChatWindow extends Application {
         boolean accepted = form.showAndWait();
         try {
             messageManager.sendContactResponse(sender, accepted);
-            /*if (success && accepted) {
-                loadKnownContacts();
-            }*/
-        } catch (SendFailedException | PeerNotInitializedException e) {
+        } catch (PeerNotInitializedException e) {
             showThrowable(e);
         }
     }
 
     public void showContactResponse(Contact sender, boolean accepted) {
-        loadKnownContacts();
+        if (accepted) {
+            loadKnownContacts();
+        }
         showInformation("Request confirmation",
                 sender.getName() + " " + (accepted ? "accepted" : "rejected") + " your request");
     }
 
     private void loadKnownContacts() {
-        contactManager.updateStates();
         contactItems.clear();
 
         TableColumn<Contact, String> nameCol = new TableColumn<>("Name");
@@ -306,7 +347,7 @@ public class ChatWindow extends Application {
             try {
                 messageManager.sendContactRequest(newForm.getFieldText(
                         "username"));
-            } catch (PeerNotInitializedException | SendFailedException e) {
+            } catch (PeerNotInitializedException e) {
                 showThrowable(e);
             }
         }
@@ -320,6 +361,13 @@ public class ChatWindow extends Application {
 
     public void refreshContactList() {
         loadKnownContacts();
+    }
+
+    public void replicationFinished(String stateId) {
+        System.out.println("replication finished " + stateId);
+        if (stateId.equals(SHUTDOWN_STATE)) {
+            close();
+        }
     }
 
     private void showInformation(String title, String message) {

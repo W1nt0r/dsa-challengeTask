@@ -2,14 +2,17 @@ package Presentation;
 
 import DomainObjects.Contact;
 import DomainObjects.Interfaces.IMessageTransmitter;
+import DomainObjects.Interfaces.IPeerListener;
+import DomainObjects.Interfaces.IStateListener;
 import DomainObjects.Message;
 import javafx.application.Platform;
 
-public class ChatWindowMessageListener implements IMessageTransmitter {
+public class ChatWindowListener implements IMessageTransmitter,
+        IStateListener, IPeerListener {
 
     ChatWindow chatWindow;
 
-    public ChatWindowMessageListener(ChatWindow chatWindow){
+    public ChatWindowListener(ChatWindow chatWindow){
         this.chatWindow = chatWindow;
     }
 
@@ -48,6 +51,21 @@ public class ChatWindowMessageListener implements IMessageTransmitter {
 
     @Override
     public void showThrowable(Throwable t) {
-        chatWindow.showThrowable(t);
+        Platform.runLater(() -> chatWindow.showThrowable(t));
+    }
+
+    @Override
+    public void replicationFinished(String stateId) {
+        Platform.runLater(() -> chatWindow.replicationFinished(stateId));
+    }
+
+    @Override
+    public void updateContactState(Contact contact) {
+        Platform.runLater(() -> chatWindow.refreshContactList());
+    }
+
+    @Override
+    public void peerClosed() {
+        Platform.runLater(() -> chatWindow.closeApplication());
     }
 }

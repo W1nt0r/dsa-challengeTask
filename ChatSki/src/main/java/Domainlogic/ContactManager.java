@@ -1,22 +1,24 @@
 package Domainlogic;
 
 import DomainObjects.Contact;
+import DomainObjects.Interfaces.IStateListener;
 import DomainObjects.State;
 import Service.DataSaver;
 import Service.Exceptions.DataSaveException;
 import Service.Exceptions.PeerNotInitializedException;
+import Service.Exceptions.ReplicationException;
 import Service.StateService;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
 public class ContactManager {
 
-    private final String OWN_CONTACT_FILE = "OwnContact.ser";
-    private final String CONTACT_LIST_FILE = "ContactList.ser";
+    private static final String OWN_CONTACT_FILE = "OwnContact.ser";
+    private static final String CONTACT_LIST_FILE = "ContactList.ser";
+    private final IStateListener stateListener;
 
     private Contact ownContact;
 
@@ -26,23 +28,15 @@ public class ContactManager {
 
     private HashMap<String, Contact> contactList;
 
-    public ContactManager() throws DataSaveException {
+    public ContactManager(
+            IStateListener stateListener) throws DataSaveException {
+        this.stateListener = stateListener;
         loadOwnContact();
         loadContactList();
     }
 
-    public ContactManager(Contact ownContact, HashMap<String, Contact> contactList) {
-        this.ownContact = ownContact;
-        this.contactList = contactList;
-    }
-
     public Contact getOwnContact() {
         return ownContact;
-    }
-
-    public void save() throws DataSaveException {
-        saveOwnContact();
-        saveContactList();
     }
 
     public boolean isOwnContactEmpty() {
@@ -66,35 +60,37 @@ public class ContactManager {
         Contact newContact = createContactFromName(contactName);
         contactList.put(contactName, newContact);
         saveContactList();
+        try {
+            updateState(newContact);
+        } catch (PeerNotInitializedException e) {
+            stateListener.showThrowable(e);
+        }
     }
 
     public Contact createContactFromName(String contactName) {
         return new Contact(contactName, State.EMPTY_STATE);
     }
 
-    public void writeOwnStateToDHT(boolean online) throws PeerNotInitializedException {
+    public void writeOwnStateToDHT(String stateId,
+            boolean online) throws PeerNotInitializedException, ReplicationException {
         ownContact.getState().setOnline(online);
 
-        StateService.SaveStateToDht(ownContact.getName(), ownContact.getState());
+        StateService.SaveStateToDht(stateId, ownContact.getName(),
+                ownContact.getState(), stateListener::replicationFinished);
     }
 
-    public void updateStates() {
-        for (HashMap.Entry<String, Contact> contactEntry : contactList.entrySet()) {
-            contactEntry.setValue(updateState(contactEntry.getValue()));
+    public void updateStates() throws PeerNotInitializedException {
+        for (Contact contact : contactList.values()) {
+            updateState(contact);
         }
     }
 
-    public Contact updateState(Contact contact) {
-        contact.setState(getStateForContact(contact.getName()));
-        return contact;
-    }
-
-    private State getStateForContact(String name) {
-        try {
-            return StateService.LoadStateFromDht(name);
-        } catch (Exception e) {
-            return State.EMPTY_STATE;
-        }
+    public void updateState(
+            Contact contact) throws PeerNotInitializedException {
+        StateService.LoadStateFromDht(contact.getName(), state -> {
+            contact.setState(state);
+            stateListener.updateContactState(contact);
+        }, stateListener::showThrowable);
     }
 
     private void loadOwnContact() throws DataSaveException {

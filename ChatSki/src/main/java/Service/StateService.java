@@ -1,59 +1,78 @@
 package Service;
 
 import DomainObjects.State;
-import Service.Exceptions.PeerNotAvailableException;
 import Service.Exceptions.PeerNotInitializedException;
+import Service.Exceptions.ReplicationException;
+import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.PeerDHT;
 import net.tomp2p.dht.PutBuilder;
-import net.tomp2p.p2p.JobScheduler;
-import net.tomp2p.p2p.Shutdown;
+import net.tomp2p.futures.BaseFutureListener;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.storage.Data;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 
 public class StateService {
 
     private final static String STATE_KEY_PREFIX = "state-";
-    private final static int REPLICATION_WAIT_TIME = 9 * 1000;
+    private final static Object replicationLock = new Object();
 
-    public static boolean SaveStateToDht(String username, State stateToSave) throws PeerNotInitializedException {
-        try {
-            final String stateKey = STATE_KEY_PREFIX + username;
-            PeerDHT ownPeer = PeerHolder.getOwnPeer();
+    private static ReplicationService currentReplication =
+            new NullReplicationService(StateService::changeReplication);
 
-            PutBuilder putBuilder = ownPeer.put(Number160.createHash(stateKey)).data(new Data(stateToSave));
-
-            new Thread(() -> {
-                try {
-                    JobScheduler replication = new JobScheduler(ownPeer.peer());
-                    Shutdown shutdown = replication.start(putBuilder, 1000, -1, (future) ->
-                            System.out.println("added replication"));
-
-                    Thread.sleep(REPLICATION_WAIT_TIME);
-                    System.out.println("stop replication");
-                    shutdown.shutdown();
-                } catch (InterruptedException ignored) {
-                }
-
-            }).start();
-
-            return true;
-        } catch (IOException ex) {
-            return false;
-        }
-    }
-
-    public static State LoadStateFromDht(String username) throws PeerNotAvailableException, PeerNotInitializedException {
+    public static void SaveStateToDht(String stateId, String username,
+                                      State stateToSave,
+                                      Consumer<String> onFinishReplication) throws PeerNotInitializedException, ReplicationException {
         final String stateKey = STATE_KEY_PREFIX + username;
         PeerDHT ownPeer = PeerHolder.getOwnPeer();
 
         try {
-            return (State) ownPeer.get(Number160.createHash(stateKey)).start()
-                    .awaitUninterruptibly().data().object();
-        } catch (IOException | ClassNotFoundException | NullPointerException e) {
-            throw new PeerNotAvailableException();
+            PutBuilder putBuilder = ownPeer.put(Number160.createHash(stateKey)).data(new Data(stateToSave));
+
+            synchronized (replicationLock) {
+                ReplicationService newReplicationService =
+                        new ReplicationService(stateId,
+                                ownPeer.peer(),
+                                putBuilder, StateService::changeReplication, onFinishReplication);
+                currentReplication.shutdown(newReplicationService);
+            }
+        } catch (IOException e) {
+            throw new ReplicationException("Could not make replications");
         }
+
+    }
+
+    private static synchronized void changeReplication(
+            ReplicationService nextReplication) {
+        synchronized (replicationLock) {
+            currentReplication = nextReplication;
+        }
+    }
+
+    public static void LoadStateFromDht(String username,
+                                        Consumer<State> onLoadState,
+                                        Consumer<Throwable> onError) throws PeerNotInitializedException {
+        final String stateKey = STATE_KEY_PREFIX + username;
+        PeerDHT ownPeer = PeerHolder.getOwnPeer();
+        FutureGet future = ownPeer.get(Number160.createHash(stateKey)).start();
+        future.addListener(new BaseFutureListener<FutureGet>() {
+            @Override
+            public void operationComplete(FutureGet future)
+                    throws IOException, ClassNotFoundException {
+                Data data = future.data();
+                if (data == null) {
+                    onLoadState.accept(null);
+                } else {
+                    onLoadState.accept((State) future.data().object());
+                }
+            }
+
+            @Override
+            public void exceptionCaught(Throwable t) {
+                onError.accept(t);
+            }
+        });
     }
 }

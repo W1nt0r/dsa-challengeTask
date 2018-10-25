@@ -3,6 +3,7 @@ package Service;
 import DomainObjects.*;
 import DomainObjects.Interfaces.IMessageListener;
 import DomainObjects.Interfaces.ITransmittable;
+import Domainlogic.Exceptions.SendFailedException;
 import Service.Exceptions.PeerNotInitializedException;
 import net.tomp2p.futures.BaseFutureListener;
 import net.tomp2p.futures.FutureDirect;
@@ -34,9 +35,7 @@ public class PeerCommunicator {
     private TransmissionConfirmation receiveTransmittable(PeerAddress sender,
                                                           Object request) {
         ITransmittable transmittable = (ITransmittable) request;
-        new Thread(() -> {
-            transmittable.handleReception(messageListener);
-        }).start();
+        new Thread(() -> transmittable.handleReception(messageListener)).start();
         return new TransmissionConfirmation();
     }
 
@@ -46,8 +45,12 @@ public class PeerCommunicator {
         FutureDirect future = PeerHolder.getOwnPeer().peer().sendDirect(address).object(transmittable).start();
         future.addListener(new BaseFutureListener<FutureDirect>() {
             @Override
-            public void operationComplete(FutureDirect future) {
-                transmittable.handleConfirmation(receiver, messageListener);
+            public void operationComplete(FutureDirect future) throws SendFailedException {
+                if (future.isSuccess()) {
+                    transmittable.handleConfirmation(receiver, messageListener);
+                } else {
+                    throw new SendFailedException("Peer is not online");
+                }
             }
 
             @Override

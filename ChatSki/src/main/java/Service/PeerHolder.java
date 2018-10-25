@@ -3,9 +3,12 @@ package Service;
 import DomainObjects.BootstrapInformation;
 import Service.Exceptions.PeerNotInitializedException;
 import net.tomp2p.dht.PeerDHT;
+import net.tomp2p.futures.BaseFuture;
+import net.tomp2p.futures.BaseFutureListener;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.function.Consumer;
 
 public class PeerHolder {
 
@@ -20,10 +23,26 @@ public class PeerHolder {
         return Bootstrap.bootstrap(ownPeer, bootstrapInfo);
     }
 
-    public static void closePeer() {
+    public static void closePeer(Runnable onClosed, Consumer<Throwable> onError) {
         if (ownPeer != null) {
-            ownPeer.shutdown();
+            BaseFuture future = ownPeer.shutdown();
+            future.addListener(new BaseFutureListener<BaseFuture>() {
+                @Override
+                public void operationComplete(
+                        BaseFuture future) {
+                    onClosed.run();
+                }
+
+                @Override
+                public void exceptionCaught(Throwable t) {
+                    onError.accept(t);
+                }
+            });
         }
+    }
+
+    public static boolean isPeerInitialized() {
+        return ownPeer != null;
     }
 
     static PeerDHT getOwnPeer() throws PeerNotInitializedException{
