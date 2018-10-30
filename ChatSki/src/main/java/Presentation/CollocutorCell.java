@@ -1,9 +1,12 @@
 package Presentation;
 
 import DomainObjects.Contact;
+import DomainObjects.Group;
 import DomainObjects.Interfaces.ICollocutor;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.ListCell;
+
+import javax.swing.text.AbstractDocument;
 
 public class CollocutorCell extends ListCell<ICollocutor> {
 
@@ -11,14 +14,18 @@ public class CollocutorCell extends ListCell<ICollocutor> {
     protected void updateItem(ICollocutor item, boolean empty) {
         super.updateItem(item, empty);
 
-        if(empty) {
+        if (empty) {
             setText(null);
             setContentDisplay(ContentDisplay.TEXT_ONLY);
-        }
-        else {
+        } else {
             if (item instanceof Contact) {
                 ContactCell cell = new ContactCell();
                 cell.setContact((Contact) item);
+                setGraphic(cell);
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            } else if (item instanceof Group) {
+                GroupCell cell = new GroupCell();
+                cell.setGroup((Group) item);
                 setGraphic(cell);
                 setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
             }
