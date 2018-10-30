@@ -1,11 +1,12 @@
 package DomainObjects;
 
+import DomainObjects.Interfaces.IMessage;
 import DomainObjects.Interfaces.ITransmittable;
 import DomainObjects.Interfaces.IMessageListener;
 
 import java.io.Serializable;
 
-public class Message implements Serializable, ITransmittable {
+public class Message implements Serializable, ITransmittable, IMessage {
     private final Contact sender;
     private final String message;
 

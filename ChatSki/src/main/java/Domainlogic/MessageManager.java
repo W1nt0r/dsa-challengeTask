@@ -2,7 +2,6 @@ package Domainlogic;
 
 import DomainObjects.*;
 import DomainObjects.Interfaces.*;
-import Domainlogic.Exceptions.NotInContactListException;
 import Domainlogic.Exceptions.SendFailedException;
 import Service.Exceptions.DataSaveException;
 import Service.Exceptions.PeerNotInitializedException;
@@ -32,18 +31,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
         activeChats = new HashMap<>();
     }
 
-    public synchronized void sendMessage(String receiverName,
-                                         String message) throws NotInContactListException, PeerNotInitializedException {
-        if (!contactManager.isContact(receiverName)) {
-            throw new NotInContactListException();
-        }
-        Contact receiver = contactManager.getContact(receiverName);
-        Message msg = new Message(contactManager.getOwnContact(), message);
-
-        send(receiver, msg);
-    }
-
-    public synchronized List<Message> getChatHistory(String username) {
+    public synchronized List<IMessage> getChatHistory(String username) {
         ChatSequence conversation = activeChats.get(username);
 
         return conversation == null ? new ArrayList<>() : conversation.getChatMessages();
@@ -137,7 +125,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
     }
 
     private synchronized void appendMessageToChatSequence(String username,
-                                                          Message message) {
+                                                          IMessage message) {
         if (!isChatActive(username)) {
             activeChats.put(username, new ChatSequence());
         }
@@ -172,6 +160,14 @@ public class MessageManager implements IMessageListener, IMessageSender {
 
     @Override
     public void receiveGroupMessage(GroupMessage message) {
+        if (!contactManager.isKnownGroup(message.getGroup())) {
+            try {
+                contactManager.addGroup(message.getGroup());
+            } catch (DataSaveException e) {
+                messageTransmitter.showThrowable(e);
+            }
+        }
+        appendMessageToChatSequence(message.getGroup().getName(), message);
         messageTransmitter.receiveGroupMessage(message);
     }
 

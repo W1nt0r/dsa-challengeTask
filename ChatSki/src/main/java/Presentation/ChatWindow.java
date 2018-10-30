@@ -2,6 +2,7 @@ package Presentation;
 
 import DomainObjects.*;
 import DomainObjects.Interfaces.ICollocutor;
+import DomainObjects.Interfaces.IMessage;
 import Domainlogic.BootstrapManager;
 import Domainlogic.ContactManager;
 import Domainlogic.Exceptions.NetworkJoinException;
@@ -45,7 +46,7 @@ public class ChatWindow extends Application {
     private Stage stage;
     private BorderPane rootBorderPane = new BorderPane();
     private ListView<ICollocutor> contactTable = new ListView<>();
-    private ListView<Message> messageListView = new ListView<>();
+    private ListView<IMessage> messageListView = new ListView<>();
     private Button sendButton = new Button("Send");
     private Button addGroupButton = new Button("Add Group");
     private Button addContactButton = new Button("Add Contact");
@@ -54,7 +55,7 @@ public class ChatWindow extends Application {
             new ChatWindowListener(this);
 
     private ObservableList<ICollocutor> contactItems = FXCollections.observableArrayList();
-    private ObservableList<Message> messages = FXCollections.observableArrayList();
+    private ObservableList<IMessage> messages = FXCollections.observableArrayList();
     private ContactManager contactManager;
     private MessageManager messageManager;
     private ICollocutor activeChat;
@@ -239,8 +240,9 @@ public class ChatWindow extends Application {
 
     public void printReceivedGroupMessage(GroupMessage message) {
         loadKnownContacts();
-        showInformation("Groupmessage " + message.getGroup().getName(),
-                message.getSender().getName() + " sent:\n" + message.getMessage());
+        if (message.getSender().equals(activeChat)) {
+            messages.add(message);
+        }
     }
 
     public void showContactRequest(Contact sender) {
@@ -327,18 +329,18 @@ public class ChatWindow extends Application {
         rootBorderPane.setRight(borderPane);
 
         contactTable.getSelectionModel().selectedItemProperty()
-                .addListener((observable, oldSelected, newSelected) -> showContactConversation((Contact)newSelected));
+                .addListener((observable, oldSelected, newSelected) -> showConversation(newSelected));
 
         contactTable.setCellFactory(new ContactCellFactory());
     }
 
-    private void showContactConversation(Contact contact) {
-        if (contact != null) {
+    private void showConversation(ICollocutor collocutor) {
+        if (collocutor != null) {
             messages.clear();
-            activeChat = contact;
+            activeChat = collocutor;
 
-            String username = contact.getName();
-            List<Message> conversation = messageManager.getChatHistory(username);
+            String username = collocutor.getName();
+            List<IMessage> conversation = messageManager.getChatHistory(username);
             messages.addAll(conversation);
         }
     }

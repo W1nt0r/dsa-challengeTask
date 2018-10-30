@@ -1,11 +1,12 @@
 package DomainObjects;
 
+import DomainObjects.Interfaces.IMessage;
 import DomainObjects.Interfaces.IMessageListener;
 import DomainObjects.Interfaces.ITransmittable;
 
 import java.io.Serializable;
 
-public class GroupMessage implements Serializable, ITransmittable {
+public class GroupMessage implements Serializable, ITransmittable, IMessage {
 
     private Group group;
     private Contact sender;
@@ -27,6 +28,11 @@ public class GroupMessage implements Serializable, ITransmittable {
 
     public Contact getSender() {
         return sender;
+    }
+
+    @Override
+    public String toString() {
+        return sender.getName() + ": " + message;
     }
 
     @Override

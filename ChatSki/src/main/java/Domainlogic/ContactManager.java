@@ -84,6 +84,10 @@ public class ContactManager {
         saveGroupList();
     }
 
+    public boolean isKnownGroup(Group group) {
+        return groupList.containsKey(group.getName());
+    }
+
     public Contact createContactFromName(String contactName) {
         return new Contact(contactName, State.EMPTY_STATE);
     }
