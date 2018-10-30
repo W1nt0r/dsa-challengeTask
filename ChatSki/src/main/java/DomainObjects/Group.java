@@ -1,9 +1,12 @@
 package DomainObjects;
 
+import DomainObjects.Interfaces.ICollocutor;
+import DomainObjects.Interfaces.IMessageSender;
+
 import java.io.Serializable;
 import java.util.Set;
 
-public class Group implements Serializable {
+public class Group implements Serializable, ICollocutor {
 
     private Set<Contact> members;
     private String name;
@@ -19,5 +22,10 @@ public class Group implements Serializable {
 
     public String getName() {
         return name;
+    }
+
+    @Override
+    public void sendMessage(String message, IMessageSender sender) {
+        sender.sendGroupMessage(this, message);
     }
 }

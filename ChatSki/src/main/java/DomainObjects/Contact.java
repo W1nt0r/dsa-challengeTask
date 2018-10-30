@@ -1,6 +1,7 @@
 package DomainObjects;
 
 import DomainObjects.Interfaces.ICollocutor;
+import DomainObjects.Interfaces.IMessageSender;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -55,5 +56,10 @@ public class Contact implements Serializable, ICollocutor {
     @Override
     public String toString() {
         return name;
+    }
+
+    @Override
+    public void sendMessage(String message, IMessageSender sender) {
+        sender.sendMessage(this, message);
     }
 }

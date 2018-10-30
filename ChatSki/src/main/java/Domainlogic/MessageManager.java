@@ -1,21 +1,18 @@
 package Domainlogic;
 
 import DomainObjects.*;
-import DomainObjects.Interfaces.IMessageTransmitter;
-import DomainObjects.Interfaces.IStateListener;
-import DomainObjects.Interfaces.ITransmittable;
+import DomainObjects.Interfaces.*;
 import Domainlogic.Exceptions.NotInContactListException;
 import Domainlogic.Exceptions.SendFailedException;
 import Service.Exceptions.DataSaveException;
 import Service.Exceptions.PeerNotInitializedException;
-import DomainObjects.Interfaces.IMessageListener;
 import Service.PeerCommunicator;
 import Service.StateService;
 
 import java.net.UnknownHostException;
 import java.util.*;
 
-public class MessageManager implements IMessageListener {
+public class MessageManager implements IMessageListener, IMessageSender {
 
     private static final String GROUP_CREATION_MESSAGE = "%s created group %s";
 
@@ -67,7 +64,7 @@ public class MessageManager implements IMessageListener {
     }
 
     public synchronized void sendGroupCreation(String groupName,
-                                               Set<Contact> members) throws PeerNotInitializedException {
+                                               Set<Contact> members) {
         Contact ownContact = contactManager.getOwnContact();
         String firstMessage = String.format(GROUP_CREATION_MESSAGE,
                 ownContact.getName(), groupName);
@@ -76,13 +73,28 @@ public class MessageManager implements IMessageListener {
         sendGroupMessage(newGroup, firstMessage);
     }
 
-    public synchronized void sendGroupMessage(Group group, String message) throws PeerNotInitializedException {
+    @Override
+    public synchronized void sendMessage(Contact receiver, String message) {
+        Message msg = new Message(contactManager.getOwnContact(), message);
+        try {
+            send(receiver, msg);
+        } catch (PeerNotInitializedException e) {
+            messageTransmitter.showThrowable(e);
+        }
+    }
+
+    @Override
+    public synchronized void sendGroupMessage(Group group, String message) {
         Contact ownContact = contactManager.getOwnContact();
         GroupMessage groupMessage = new GroupMessage(group, ownContact,
                 message);
         for (Contact receiver : group.getMembers()) {
             if (!receiver.equals(ownContact)) {
-                send(receiver, groupMessage);
+                try {
+                    send(receiver, groupMessage);
+                } catch (PeerNotInitializedException e) {
+                    messageTransmitter.showThrowable(e);
+                }
             }
         }
     }
@@ -177,7 +189,7 @@ public class MessageManager implements IMessageListener {
         if (accepted) {
             try {
                 contactManager.addContact(receiver.getName());
-                messageTransmitter.receiveContactResponseConfirmation(receiver, accepted);
+                messageTransmitter.receiveContactResponseConfirmation(receiver, true);
             } catch (DataSaveException e) {
                 messageTransmitter.showThrowable(e);
             }

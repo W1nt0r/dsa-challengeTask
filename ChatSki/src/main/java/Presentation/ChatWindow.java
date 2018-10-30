@@ -360,11 +360,7 @@ public class ChatWindow extends Application {
     private void addGroup() {
         GroupSelectionForm form = new GroupSelectionForm("Add group", contactManager.getContactList());
         if (form.showAndWait()) {
-            try {
-                messageManager.sendGroupCreation(form.getGroupName(), form.getGroupMembers());
-            } catch (PeerNotInitializedException e) {
-                showThrowable(e);
-            }
+            messageManager.sendGroupCreation(form.getGroupName(), form.getGroupMembers());
         }
     }
 
