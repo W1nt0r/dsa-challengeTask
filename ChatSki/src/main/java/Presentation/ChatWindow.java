@@ -57,7 +57,7 @@ public class ChatWindow extends Application {
     private ObservableList<Message> messages = FXCollections.observableArrayList();
     private ContactManager contactManager;
     private MessageManager messageManager;
-    private Contact activeChat;
+    private ICollocutor activeChat;
 
     @Override
     public void start(Stage stage) {
@@ -238,6 +238,7 @@ public class ChatWindow extends Application {
     }
 
     public void printReceivedGroupMessage(GroupMessage message) {
+        loadKnownContacts();
         showInformation("Groupmessage " + message.getGroup().getName(),
                 message.getSender().getName() + " sent:\n" + message.getMessage());
     }
@@ -272,7 +273,7 @@ public class ChatWindow extends Application {
 //        TableColumn<Contact, String> ipCol = new TableColumn<>("IP");
 //        ipCol.setCellValueFactory(new PropertyValueFactory<>("Ip"));
 
-        contactItems.addAll(contactManager.getContactList());
+        contactItems.addAll(contactManager.getCollocutors());
 
 //        contactTable = new TableView<>();
 //        contactTable.getColumns().add(nameCol);
@@ -347,7 +348,7 @@ public class ChatWindow extends Application {
             if (activeChat != null) {
                 String messageText = messageField.getText();
                 messageField.clear();
-                messageManager.sendMessage(activeChat.getName(), messageText);
+                activeChat.sendMessage(messageText, messageManager);
             } else {
                 showInformation("No Contacts chosen", "Please chose a " +
                         "contact or add a new one.");
@@ -361,6 +362,7 @@ public class ChatWindow extends Application {
         GroupSelectionForm form = new GroupSelectionForm("Add group", contactManager.getContactList());
         if (form.showAndWait()) {
             messageManager.sendGroupCreation(form.getGroupName(), form.getGroupMembers());
+            loadKnownContacts();
         }
     }
 

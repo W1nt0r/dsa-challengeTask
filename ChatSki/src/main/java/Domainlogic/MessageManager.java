@@ -71,6 +71,11 @@ public class MessageManager implements IMessageListener, IMessageSender {
         members.add(ownContact);
         Group newGroup = new Group(groupName, members);
         sendGroupMessage(newGroup, firstMessage);
+        try {
+            contactManager.addGroup(newGroup);
+        } catch (DataSaveException e) {
+            messageTransmitter.showThrowable(e);
+        }
     }
 
     @Override

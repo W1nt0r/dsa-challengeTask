@@ -1,6 +1,8 @@
 package Domainlogic;
 
 import DomainObjects.Contact;
+import DomainObjects.Group;
+import DomainObjects.Interfaces.ICollocutor;
 import DomainObjects.Interfaces.IStateListener;
 import DomainObjects.State;
 import Service.DataSaver;
@@ -18,21 +20,31 @@ public class ContactManager {
 
     private static final String OWN_CONTACT_FILE = "OwnContact.ser";
     private static final String CONTACT_LIST_FILE = "ContactList.ser";
+    private static final String GROUP_LIST_FILE = "GroupList.ser";
     private final IStateListener stateListener;
 
     private Contact ownContact;
 
+    private HashMap<String, Contact> contactList;
+    private HashMap<String, Group> groupList;
+
+    public List<ICollocutor> getCollocutors() {
+        ArrayList<ICollocutor> collocutors = new ArrayList<>();
+        collocutors.addAll(contactList.values());
+        collocutors.addAll(groupList.values());
+        return collocutors;
+    }
+
     public List<Contact> getContactList() {
         return new ArrayList<>(contactList.values());
     }
-
-    private HashMap<String, Contact> contactList;
 
     public ContactManager(
             IStateListener stateListener) throws DataSaveException {
         this.stateListener = stateListener;
         loadOwnContact();
         loadContactList();
+        loadGroupList();
     }
 
     public Contact getOwnContact() {
@@ -65,6 +77,11 @@ public class ContactManager {
         } catch (PeerNotInitializedException e) {
             stateListener.showThrowable(e);
         }
+    }
+
+    public void addGroup(Group newGroup) throws DataSaveException {
+        groupList.put(newGroup.getName(), newGroup);
+        saveGroupList();
     }
 
     public Contact createContactFromName(String contactName) {
@@ -116,8 +133,24 @@ public class ContactManager {
         }
     }
 
+    private void loadGroupList() throws DataSaveException {
+        DataSaver<HashMap<String, Group>> saver =
+                new DataSaver<>(GROUP_LIST_FILE);
+        try {
+            groupList = saver.loadData();
+        } catch (FileNotFoundException e) {
+            groupList = new HashMap<>();
+        }
+    }
+
     private void saveContactList() throws DataSaveException {
 //        DataSaver<HashMap<String, Contact>> saver = new DataSaver<>(CONTACT_LIST_FILE);
 //        saver.saveData(contactList);
+    }
+
+    private void saveGroupList() throws DataSaveException {
+//        DataSaver<HashMap<String, Group>> saver =
+//                new DataSaver<>(CONTACT_LIST_FILE);
+//        saver.saveData(groupList);
     }
 }
