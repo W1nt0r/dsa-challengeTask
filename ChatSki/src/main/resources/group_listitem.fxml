@@ -5,4 +5,7 @@
 
 <fx:root type="javafx.scene.layout.VBox" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml">
     <Label fx:id="groupName"/>
+    <VBox>
+        <Label fx:id="members"></Label>
+    </VBox>
 </fx:root>
