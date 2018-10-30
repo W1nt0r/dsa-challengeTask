@@ -214,7 +214,7 @@ public class ChatWindow extends Application {
     }
 
     private boolean initContacts() throws DataSaveException {
-        contactManager = new ContactManager(chatWindowListener);
+        contactManager = new ContactManager(chatWindowListener, chatWindowListener);
         if (contactManager.isOwnContactEmpty()) {
             Form form = new Form("Username", "Please enter your username", FormType.SEND);
             form.addField("username", "Username", s -> !s.trim().isEmpty(),
@@ -229,20 +229,6 @@ public class ChatWindow extends Application {
             contactManager.setOwnContactName(form.getFieldText("username"));
         }
         return true;
-    }
-
-    public void printReceivedMessage(Message message) {
-        if (message.getSender().equals(activeChat) ||
-                contactManager.getOwnContact().equals(message.getSender())) {
-            messages.add(message);
-        }
-    }
-
-    public void printReceivedGroupMessage(GroupMessage message) {
-        loadKnownContacts();
-        if (message.getSender().equals(activeChat)) {
-            messages.add(message);
-        }
     }
 
     public void showContactRequest(Contact sender) {
@@ -383,6 +369,10 @@ public class ChatWindow extends Application {
                 showThrowable(e);
             }
         }
+    }
+
+    public void updateMessages(ICollocutor collocutor) {
+        showConversation(collocutor);
     }
 
     public void showThrowable(Throwable t) {

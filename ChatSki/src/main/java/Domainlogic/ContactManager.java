@@ -3,6 +3,7 @@ package Domainlogic;
 import DomainObjects.Contact;
 import DomainObjects.Group;
 import DomainObjects.Interfaces.ICollocutor;
+import DomainObjects.Interfaces.ICollocutorListener;
 import DomainObjects.Interfaces.IStateListener;
 import DomainObjects.State;
 import Service.DataSaver;
@@ -22,11 +23,21 @@ public class ContactManager {
     private static final String CONTACT_LIST_FILE = "ContactList.ser";
     private static final String GROUP_LIST_FILE = "GroupList.ser";
     private final IStateListener stateListener;
+    private final ICollocutorListener collocutorListener;
 
     private Contact ownContact;
 
     private HashMap<String, Contact> contactList;
     private HashMap<String, Group> groupList;
+
+    public ContactManager(IStateListener stateListener,
+                          ICollocutorListener collocutorListener) throws DataSaveException {
+        this.stateListener = stateListener;
+        this.collocutorListener = collocutorListener;
+        loadOwnContact();
+        loadContactList();
+        loadGroupList();
+    }
 
     public List<ICollocutor> getCollocutors() {
         ArrayList<ICollocutor> collocutors = new ArrayList<>();
@@ -37,14 +48,6 @@ public class ContactManager {
 
     public List<Contact> getContactList() {
         return new ArrayList<>(contactList.values());
-    }
-
-    public ContactManager(
-            IStateListener stateListener) throws DataSaveException {
-        this.stateListener = stateListener;
-        loadOwnContact();
-        loadContactList();
-        loadGroupList();
     }
 
     public Contact getOwnContact() {
@@ -60,14 +63,6 @@ public class ContactManager {
         saveOwnContact();
     }
 
-    public boolean isContact(String contactName) {
-        return contactList.containsKey(contactName);
-    }
-
-    public Contact getContact(String contactName) {
-        return contactList.get(contactName);
-    }
-
     public void addContact(String contactName) throws DataSaveException {
         Contact newContact = createContactFromName(contactName);
         contactList.put(contactName, newContact);
@@ -77,11 +72,13 @@ public class ContactManager {
         } catch (PeerNotInitializedException e) {
             stateListener.showThrowable(e);
         }
+        collocutorListener.collocutorsUpdated();
     }
 
     public void addGroup(Group newGroup) throws DataSaveException {
         groupList.put(newGroup.getName(), newGroup);
         saveGroupList();
+        collocutorListener.collocutorsUpdated();
     }
 
     public boolean isKnownGroup(Group group) {
@@ -93,7 +90,7 @@ public class ContactManager {
     }
 
     public void writeOwnStateToDHT(String stateId,
-            boolean online) throws PeerNotInitializedException, ReplicationException {
+                                   boolean online) throws PeerNotInitializedException, ReplicationException {
         ownContact.getState().setOnline(online);
 
         StateService.SaveStateToDht(stateId, ownContact.getName(),

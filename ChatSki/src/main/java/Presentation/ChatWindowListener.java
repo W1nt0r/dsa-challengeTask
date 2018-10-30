@@ -1,25 +1,16 @@
 package Presentation;
 
 import DomainObjects.Contact;
-import DomainObjects.GroupMessage;
-import DomainObjects.Interfaces.IMessageTransmitter;
-import DomainObjects.Interfaces.IPeerListener;
-import DomainObjects.Interfaces.IStateListener;
-import DomainObjects.Message;
+import DomainObjects.Interfaces.*;
 import javafx.application.Platform;
 
 public class ChatWindowListener implements IMessageTransmitter,
-        IStateListener, IPeerListener {
+        IStateListener, IPeerListener, ICollocutorListener {
 
     ChatWindow chatWindow;
 
     public ChatWindowListener(ChatWindow chatWindow){
         this.chatWindow = chatWindow;
-    }
-
-    @Override
-    public void receiveMessage(Contact sender, Message message) {
-        Platform.runLater(() -> chatWindow.printReceivedMessage(message));
     }
 
     @Override
@@ -33,26 +24,16 @@ public class ChatWindowListener implements IMessageTransmitter,
     }
 
     @Override
-    public void receiveGroupMessage(GroupMessage message) {
-        Platform.runLater(() -> chatWindow.printReceivedGroupMessage(message));
-    }
-
-    @Override
-    public void receiveMessageConfirmation(Contact receiver, Message message) {
-        Platform.runLater(() -> chatWindow.printReceivedMessage(message));
-    }
-
-    @Override
-    public void receiveContactRequestConfirmation(Contact receiver) {
-
-    }
-
-    @Override
     public void receiveContactResponseConfirmation(Contact receiver,
                                                    boolean accepted) {
         if (accepted) {
             Platform.runLater(() -> chatWindow.refreshContactList());
         }
+    }
+
+    @Override
+    public void messagesUpdated(ICollocutor collocutor) {
+        Platform.runLater(() -> chatWindow.updateMessages(collocutor));
     }
 
     @Override
@@ -73,5 +54,10 @@ public class ChatWindowListener implements IMessageTransmitter,
     @Override
     public void peerClosed() {
         Platform.runLater(() -> chatWindow.closeApplication());
+    }
+
+    @Override
+    public void collocutorsUpdated() {
+        Platform.runLater(() -> chatWindow.refreshContactList());
     }
 }

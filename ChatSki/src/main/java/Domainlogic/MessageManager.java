@@ -81,6 +81,8 @@ public class MessageManager implements IMessageListener, IMessageSender {
         Contact ownContact = contactManager.getOwnContact();
         GroupMessage groupMessage = new GroupMessage(group, ownContact,
                 message);
+        appendMessageToChatSequence(group.getName(), groupMessage);
+        messageTransmitter.messagesUpdated(group);
         for (Contact receiver : group.getMembers()) {
             if (!receiver.equals(ownContact)) {
                 try {
@@ -137,7 +139,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
     public synchronized void receiveMessage(Contact sender, Message message) {
         appendMessageToChatSequence(sender.getName(), message);
 
-        messageTransmitter.receiveMessage(sender, message);
+        messageTransmitter.messagesUpdated(sender);
     }
 
     @Override
@@ -168,20 +170,20 @@ public class MessageManager implements IMessageListener, IMessageSender {
             }
         }
         appendMessageToChatSequence(message.getGroup().getName(), message);
-        messageTransmitter.receiveGroupMessage(message);
+        messageTransmitter.messagesUpdated(message.getGroup());
     }
 
     @Override
     public synchronized void receiveMessageConfirmation(Contact receiver,
                                                         Message message) {
         appendMessageToChatSequence(receiver.getName(), message);
-        messageTransmitter.receiveMessageConfirmation(receiver, message);
+        messageTransmitter.messagesUpdated(receiver);
     }
 
     @Override
     public synchronized void receiveContactRequestConfirmation(
             Contact receiver) {
-        System.out.println("Received contact request confirmation");
+
     }
 
     @Override
