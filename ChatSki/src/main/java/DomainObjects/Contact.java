@@ -24,6 +24,7 @@ public class Contact implements Serializable, ICollocutor {
         return state.getIp();
     }
 
+    @Override
     public String getName() {
         return name;
     }

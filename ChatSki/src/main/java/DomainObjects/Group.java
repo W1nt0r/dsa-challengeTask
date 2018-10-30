@@ -20,6 +20,7 @@ public class Group implements Serializable, ICollocutor {
         return members;
     }
 
+    @Override
     public String getName() {
         return name;
     }
