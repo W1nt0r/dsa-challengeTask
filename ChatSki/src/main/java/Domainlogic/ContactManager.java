@@ -13,9 +13,7 @@ import Service.Exceptions.ReplicationException;
 import Service.StateService;
 
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class ContactManager {
 
@@ -27,8 +25,8 @@ public class ContactManager {
 
     private Contact ownContact;
 
-    private HashMap<String, Contact> contactList;
-    private HashMap<String, Group> groupList;
+    private Set<Contact> contactList;
+    private Set<Group> groupList;
 
     public ContactManager(IStateListener stateListener,
                           ICollocutorListener collocutorListener) throws DataSaveException {
@@ -41,13 +39,13 @@ public class ContactManager {
 
     public List<ICollocutor> getCollocutors() {
         ArrayList<ICollocutor> collocutors = new ArrayList<>();
-        collocutors.addAll(contactList.values());
-        collocutors.addAll(groupList.values());
+        collocutors.addAll(contactList);
+        collocutors.addAll(groupList);
         return collocutors;
     }
 
     public List<Contact> getContactList() {
-        return new ArrayList<>(contactList.values());
+        return new ArrayList<>(contactList);
     }
 
     public Contact getOwnContact() {
@@ -65,7 +63,7 @@ public class ContactManager {
 
     public void addContact(String contactName) throws DataSaveException {
         Contact newContact = createContactFromName(contactName);
-        contactList.put(contactName, newContact);
+        contactList.add(newContact);
         saveContactList();
         try {
             updateState(newContact);
@@ -76,13 +74,13 @@ public class ContactManager {
     }
 
     public void addGroup(Group newGroup) throws DataSaveException {
-        groupList.put(newGroup.getName(), newGroup);
+        groupList.add(newGroup);
         saveGroupList();
         collocutorListener.collocutorsUpdated();
     }
 
     public boolean isKnownGroup(Group group) {
-        return groupList.containsKey(group.getName());
+        return groupList.contains(group);
     }
 
     public Contact createContactFromName(String contactName) {
@@ -98,7 +96,7 @@ public class ContactManager {
     }
 
     public void updateStates() throws PeerNotInitializedException {
-        for (Contact contact : contactList.values()) {
+        for (Contact contact : contactList) {
             updateState(contact);
         }
     }
@@ -126,21 +124,22 @@ public class ContactManager {
     }
 
     private void loadContactList() throws DataSaveException {
-        DataSaver<HashMap<String, Contact>> saver = new DataSaver<>(CONTACT_LIST_FILE);
+        DataSaver<HashSet<Contact>> saver =
+                new DataSaver<>(CONTACT_LIST_FILE);
         try {
             contactList = saver.loadData();
         } catch (FileNotFoundException e) {
-            contactList = new HashMap<>();
+            contactList = new HashSet<>();
         }
     }
 
     private void loadGroupList() throws DataSaveException {
-        DataSaver<HashMap<String, Group>> saver =
+        DataSaver<HashSet<Group>> saver =
                 new DataSaver<>(GROUP_LIST_FILE);
         try {
             groupList = saver.loadData();
         } catch (FileNotFoundException e) {
-            groupList = new HashMap<>();
+            groupList = new HashSet<>();
         }
     }
 
