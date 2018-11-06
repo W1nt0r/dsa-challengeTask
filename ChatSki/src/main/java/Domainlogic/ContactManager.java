@@ -18,23 +18,32 @@ import java.util.*;
 public class ContactManager {
 
     private static final String OWN_CONTACT_FILE = "OwnContact.ser";
-    private static final String CONTACT_LIST_FILE = "ContactList.ser";
-    private static final String GROUP_LIST_FILE = "GroupList.ser";
+    private static final String CONTACT_LIST_FILE = "ContactList-%s.ser";
+    private static final String GROUP_LIST_FILE = "GroupList-%s.ser";
     private final IStateListener stateListener;
     private final ICollocutorListener collocutorListener;
 
     private Contact ownContact;
 
-    private Set<Contact> contactList;
-    private Set<Group> groupList;
+    private HashSet<Contact> contactList;
+    private HashSet<Group> groupList;
 
     public ContactManager(IStateListener stateListener,
                           ICollocutorListener collocutorListener) throws DataSaveException {
         this.stateListener = stateListener;
         this.collocutorListener = collocutorListener;
         loadOwnContact();
-        loadContactList();
-        loadGroupList();
+        loadListData();
+    }
+
+    private void loadListData() throws DataSaveException {
+        if (!isOwnContactEmpty()) {
+            loadContactList();
+            loadGroupList();
+        } else {
+            contactList = new HashSet<>();
+            groupList = new HashSet<>();
+        }
     }
 
     public List<ICollocutor> getCollocutors() {
@@ -59,6 +68,7 @@ public class ContactManager {
     public void setOwnContactName(String name) throws DataSaveException {
         ownContact.setName(name);
         saveOwnContact();
+        loadListData();
     }
 
     public void addContact(String contactName) throws DataSaveException {
@@ -109,6 +119,10 @@ public class ContactManager {
         }, stateListener::showThrowable);
     }
 
+    private String generateFileName(String template) {
+        return String.format(template, ownContact.getName());
+    }
+
     private void loadOwnContact() throws DataSaveException {
         DataSaver<Contact> saver = new DataSaver<>(OWN_CONTACT_FILE);
         try {
@@ -125,7 +139,7 @@ public class ContactManager {
 
     private void loadContactList() throws DataSaveException {
         DataSaver<HashSet<Contact>> saver =
-                new DataSaver<>(CONTACT_LIST_FILE);
+                new DataSaver<>(generateFileName(CONTACT_LIST_FILE));
         try {
             contactList = saver.loadData();
         } catch (FileNotFoundException e) {
@@ -135,7 +149,7 @@ public class ContactManager {
 
     private void loadGroupList() throws DataSaveException {
         DataSaver<HashSet<Group>> saver =
-                new DataSaver<>(GROUP_LIST_FILE);
+                new DataSaver<>(generateFileName(GROUP_LIST_FILE));
         try {
             groupList = saver.loadData();
         } catch (FileNotFoundException e) {
@@ -144,13 +158,14 @@ public class ContactManager {
     }
 
     private void saveContactList() throws DataSaveException {
-//        DataSaver<HashMap<String, Contact>> saver = new DataSaver<>(CONTACT_LIST_FILE);
-//        saver.saveData(contactList);
+        DataSaver<HashSet<Contact>> saver =
+                new DataSaver<>(generateFileName(CONTACT_LIST_FILE));
+        saver.saveData(contactList);
     }
 
     private void saveGroupList() throws DataSaveException {
-//        DataSaver<HashMap<String, Group>> saver =
-//                new DataSaver<>(GROUP_LIST_FILE);
-//        saver.saveData(groupList);
+        DataSaver<HashSet<Group>> saver =
+                new DataSaver<>(generateFileName(GROUP_LIST_FILE));
+        saver.saveData(groupList);
     }
 }
