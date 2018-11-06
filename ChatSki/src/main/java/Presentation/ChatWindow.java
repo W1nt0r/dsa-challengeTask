@@ -286,10 +286,10 @@ public class ChatWindow extends Application {
             messages.clear();
             activeChat = collocutor;
 
-            String username = collocutor.getName();
-            List<IMessage> conversation = messageManager.getChatHistory(username);
+            List<IMessage> conversation =
+                    messageManager.getChatHistory(collocutor.getName());
             messages.addAll(conversation);
-            controller.getCollocutorName().setText(username);
+            controller.getCollocutorName().setText(collocutor.getName());
         }
     }
 
@@ -334,7 +334,9 @@ public class ChatWindow extends Application {
     }
 
     public void updateMessages(ICollocutor collocutor) {
-        showConversation(collocutor);
+        if (collocutor.equals(activeChat)) {
+            showConversation(collocutor);
+        }
     }
 
     public void showThrowable(Throwable t) {

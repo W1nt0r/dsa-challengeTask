@@ -81,8 +81,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
         Contact ownContact = contactManager.getOwnContact();
         GroupMessage groupMessage = new GroupMessage(group, ownContact,
                 message);
-        appendMessageToChatSequence(group.getName(), groupMessage);
-        messageTransmitter.messagesUpdated(group);
+        appendMessageToChatSequence(group, groupMessage);
         for (Contact receiver : group.getMembers()) {
             if (!receiver.equals(ownContact)) {
                 try {
@@ -126,20 +125,20 @@ public class MessageManager implements IMessageListener, IMessageSender {
         return activeChats.containsKey(username);
     }
 
-    private synchronized void appendMessageToChatSequence(String username,
+    private synchronized void appendMessageToChatSequence(ICollocutor collocutor,
                                                           IMessage message) {
+        String username = collocutor.getName();
         if (!isChatActive(username)) {
             activeChats.put(username, new ChatSequence());
         }
 
         activeChats.get(username).appendMessage(message);
+        messageTransmitter.messagesUpdated(collocutor);
     }
 
     @Override
     public synchronized void receiveMessage(Contact sender, Message message) {
-        appendMessageToChatSequence(sender.getName(), message);
-
-        messageTransmitter.messagesUpdated(sender);
+        appendMessageToChatSequence(sender, message);
     }
 
     @Override
@@ -169,15 +168,13 @@ public class MessageManager implements IMessageListener, IMessageSender {
                 messageTransmitter.showThrowable(e);
             }
         }
-        appendMessageToChatSequence(message.getGroup().getName(), message);
-        messageTransmitter.messagesUpdated(message.getGroup());
+        appendMessageToChatSequence(message.getGroup(), message);
     }
 
     @Override
     public synchronized void receiveMessageConfirmation(Contact receiver,
                                                         Message message) {
-        appendMessageToChatSequence(receiver.getName(), message);
-        messageTransmitter.messagesUpdated(receiver);
+        appendMessageToChatSequence(receiver, message);
     }
 
     @Override
