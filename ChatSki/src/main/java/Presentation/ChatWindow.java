@@ -173,7 +173,7 @@ public class ChatWindow extends Application {
         }
     }
 
-    private boolean initPeer() throws DataSaveException, PeerCreateException, NetworkJoinException, IOException, PeerNotInitializedException, ReplicationException {
+    private boolean initPeer() throws DataSaveException, PeerCreateException, NetworkJoinException, IOException {
         BootstrapManager bootstrapManager = new BootstrapManager();
 
         if (bootstrapManager.isBootstrapInfoEmpty()) {
@@ -293,6 +293,7 @@ public class ChatWindow extends Application {
             List<IMessage> conversation =
                     messageManager.getChatHistory(collocutor);
             messages.addAll(conversation);
+            controller.getMessageView().scrollTo(conversation.get(conversation.size() - 1));
             controller.getCollocutorName().setText(collocutor.getName());
         }
     }
