@@ -111,12 +111,18 @@ public class ContactManager {
         }
     }
 
-    public void updateState(
+    private void updateState(
             Contact contact) throws PeerNotInitializedException {
         StateService.LoadStateFromDht(contact.getName(), state -> {
             contact.setState(state);
             stateListener.updateContactState(contact);
         }, stateListener::showThrowable);
+    }
+
+    public void updateWithReceivedState(Contact contact) {
+        contactList.remove(contact);
+        contactList.add(contact);
+        stateListener.updateContactState(contact);
     }
 
     private String generateFileName(String template) {

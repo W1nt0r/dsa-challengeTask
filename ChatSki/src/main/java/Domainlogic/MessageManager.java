@@ -5,11 +5,13 @@ import DomainObjects.Interfaces.*;
 import Domainlogic.Exceptions.SendFailedException;
 import Service.Exceptions.DataSaveException;
 import Service.Exceptions.PeerNotInitializedException;
+import Service.Exceptions.ReplicationException;
 import Service.PeerCommunicator;
 import Service.StateService;
 
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class MessageManager implements IMessageListener, IMessageSender {
 
@@ -40,7 +42,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
     public synchronized void sendContactResponse(Contact receiver,
                                                  boolean accepted) throws PeerNotInitializedException {
         ContactResponse response = new ContactResponse(contactManager.getOwnContact(), accepted);
-        send(receiver, response);
+        send(receiver, response, this::receiveThrowable);
     }
 
     public synchronized void sendContactRequest(
@@ -48,7 +50,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
         ContactRequest request = new ContactRequest(contactManager.getOwnContact());
         Contact receiverContact = contactManager.createContactFromName(receiver);
 
-        send(receiverContact, request);
+        send(receiverContact, request, this::receiveThrowable);
     }
 
     public synchronized void sendGroupCreation(String groupName,
@@ -66,11 +68,20 @@ public class MessageManager implements IMessageListener, IMessageSender {
         }
     }
 
+    public synchronized void updateOwnState(String stateId, boolean online) throws ReplicationException, PeerNotInitializedException {
+        contactManager.writeOwnStateToDHT(stateId, online);
+        StateInformation stateInfo =
+                new StateInformation(contactManager.getOwnContact());
+        for (Contact contact : contactManager.getContactList()) {
+            send(contact, stateInfo, this::logThrowable);
+        }
+    }
+
     @Override
     public synchronized void sendMessage(Contact receiver, String message) {
         Message msg = new Message(contactManager.getOwnContact(), message);
         try {
-            send(receiver, msg);
+            send(receiver, msg, this::receiveThrowable);
         } catch (PeerNotInitializedException e) {
             messageTransmitter.showThrowable(e);
         }
@@ -85,7 +96,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
         for (Contact receiver : group.getMembers()) {
             if (!receiver.equals(ownContact)) {
                 try {
-                    send(receiver, groupMessage);
+                    send(receiver, groupMessage, this::logThrowable);
                 } catch (PeerNotInitializedException e) {
                     messageTransmitter.showThrowable(e);
                 }
@@ -94,29 +105,30 @@ public class MessageManager implements IMessageListener, IMessageSender {
     }
 
     private synchronized void send(Contact receiver,
-                                   ITransmittable transmittable) throws PeerNotInitializedException {
+                                   ITransmittable transmittable,
+                                   Consumer<Throwable> onError) throws PeerNotInitializedException {
         StateService.LoadStateFromDht(receiver.getName(),
-                state -> send(receiver, state, transmittable), stateListener::showThrowable);
+                state -> send(receiver, state, transmittable, onError), onError);
     }
 
-    private void send(Contact receiver, State currentState,
-                      ITransmittable transmittable) {
+    private synchronized void send(Contact receiver, State currentState,
+                      ITransmittable transmittable, Consumer<Throwable> onError) {
         updateState(receiver, currentState);
         if (currentState == null || !currentState.isOnline()) {
-            messageTransmitter.showThrowable(new SendFailedException("Peer is not online"));
+            onError.accept(new SendFailedException("Peer is not online: "
+                    + receiver.getName()));
             return;
         }
         try {
             communicator.sendDirect(receiver, transmittable);
         } catch (UnknownHostException e) {
-            messageTransmitter.showThrowable(new SendFailedException("Unknown" +
-                    " IP"));
+            onError.accept(new SendFailedException("Unknown IP"));
         } catch (PeerNotInitializedException e) {
-            messageTransmitter.showThrowable(e);
+            onError.accept(e);
         }
     }
 
-    private void updateState(Contact contact, State newState) {
+    private synchronized void updateState(Contact contact, State newState) {
         contact.setState(newState);
         stateListener.updateContactState(contact);
     }
@@ -159,7 +171,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
     }
 
     @Override
-    public void receiveGroupMessage(GroupMessage message) {
+    public synchronized void receiveGroupMessage(GroupMessage message) {
         if (!contactManager.isKnownGroup(message.getGroup())) {
             try {
                 contactManager.addGroup(message.getGroup());
@@ -196,13 +208,22 @@ public class MessageManager implements IMessageListener, IMessageSender {
     }
 
     @Override
-    public void receiveGroupMessageConfirmation(Contact receiver,
+    public synchronized void receiveGroupMessageConfirmation(Contact receiver,
                                                 GroupMessage message) {
 
+    }
+
+    private synchronized void logThrowable(Throwable t) {
+        System.out.println(t.getMessage());
     }
 
     @Override
     public synchronized void receiveThrowable(Throwable t) {
         messageTransmitter.showThrowable(t);
+    }
+
+    @Override
+    public void receiveStateInformation(Contact contact) {
+        contactManager.updateWithReceivedState(contact);
     }
 }

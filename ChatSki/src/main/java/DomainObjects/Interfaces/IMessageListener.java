@@ -24,4 +24,6 @@ public interface IMessageListener {
                                          GroupMessage message);
 
     void receiveThrowable(Throwable t);
+
+    void receiveStateInformation(Contact contact);
 }

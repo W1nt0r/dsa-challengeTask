@@ -132,7 +132,7 @@ public class ChatWindow extends Application {
         currentScene = new Scene(pane, width, height);
         stage.setScene(currentScene);
         try {
-            contactManager.writeOwnStateToDHT(SHUTDOWN_STATE, false);
+            messageManager.updateOwnState(SHUTDOWN_STATE, false);
         } catch (PeerNotInitializedException | ReplicationException e) {
             showThrowable(e);
         }
@@ -156,6 +156,7 @@ public class ChatWindow extends Application {
         }
         messageManager = new MessageManager(chatWindowListener, chatWindowListener,
                 contactManager);
+        messageManager.updateOwnState(STARTUP_STATE, true);
         contactManager.updateStates();
 
         initializeActiveChat();
@@ -194,7 +195,6 @@ public class ChatWindow extends Application {
             }
             bootstrapManager.setBootstrapInfo(info);
         }
-        contactManager.writeOwnStateToDHT(STARTUP_STATE, true);
         return true;
     }
 
