@@ -269,6 +269,10 @@ public class ChatWindow extends Application {
     public void showContactResponse(Contact sender, boolean accepted) {
         if (accepted) {
             loadKnownContacts();
+
+            if (activeChat == null) {
+                activeChat = contactManager.getContactList().get(0);
+            }
         }
         showInformation("Request confirmation",
                 sender.getName() + " " + (accepted ? "accepted" : "rejected") + " your request");
