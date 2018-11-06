@@ -291,7 +291,7 @@ public class ChatWindow extends Application {
             activeChat = collocutor;
 
             List<IMessage> conversation =
-                    messageManager.getChatHistory(collocutor.getName());
+                    messageManager.getChatHistory(collocutor);
             messages.addAll(conversation);
             controller.getCollocutorName().setText(collocutor.getName());
         }

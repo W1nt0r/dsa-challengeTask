@@ -19,7 +19,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
     private final IStateListener stateListener;
     private final PeerCommunicator communicator;
     private final ContactManager contactManager;
-    private final Map<String, ChatSequence> activeChats;
+    private final Map<ICollocutor, ChatSequence> activeChats;
 
     public MessageManager(IMessageTransmitter messageListener,
                           IStateListener stateListener,
@@ -31,8 +31,8 @@ public class MessageManager implements IMessageListener, IMessageSender {
         activeChats = new HashMap<>();
     }
 
-    public synchronized List<IMessage> getChatHistory(String username) {
-        ChatSequence conversation = activeChats.get(username);
+    public synchronized List<IMessage> getChatHistory(ICollocutor collocutor) {
+        ChatSequence conversation = activeChats.get(collocutor);
 
         return conversation == null ? new ArrayList<>() : conversation.getChatMessages();
     }
@@ -121,18 +121,17 @@ public class MessageManager implements IMessageListener, IMessageSender {
         stateListener.updateContactState(contact);
     }
 
-    private synchronized boolean isChatActive(String username) {
-        return activeChats.containsKey(username);
+    private synchronized boolean isChatActive(ICollocutor collocutor) {
+        return activeChats.containsKey(collocutor);
     }
 
     private synchronized void appendMessageToChatSequence(ICollocutor collocutor,
                                                           IMessage message) {
-        String username = collocutor.getName();
-        if (!isChatActive(username)) {
-            activeChats.put(username, new ChatSequence());
+        if (!isChatActive(collocutor)) {
+            activeChats.put(collocutor, new ChatSequence());
         }
 
-        activeChats.get(username).appendMessage(message);
+        activeChats.get(collocutor).appendMessage(message);
         messageTransmitter.messagesUpdated(collocutor);
     }
 
