@@ -22,6 +22,7 @@ public class GroupMessage implements Serializable, ITransmittable, IMessage {
         return group;
     }
 
+    @Override
     public String getMessage() {
         return message;
     }

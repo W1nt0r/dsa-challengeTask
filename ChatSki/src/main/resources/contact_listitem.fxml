@@ -3,10 +3,20 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<fx:root type="javafx.scene.layout.VBox" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml">
-    <Label fx:id="contactName"/>
+<?import java.net.URL?>
+<fx:root type="javafx.scene.layout.VBox"
+         xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         styleClass="collocutor-root">
+    <Label fx:id="contactName"
+           styleClass="collocutor-name"/>
     <HBox>
-        <Label fx:id="statusLabel" text="Status: "/>
+        <Label fx:id="statusLabel"
+               text="Status: "
+               styleClass="collocutor-extensions"/>
         <Label fx:id="contactStatus"/>
     </HBox>
+    <stylesheets>
+        <URL value="@chat_window.css"/>
+    </stylesheets>
 </fx:root>

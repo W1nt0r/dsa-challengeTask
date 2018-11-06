@@ -1,6 +1,7 @@
 package Presentation;
 
 import DomainObjects.Contact;
+import DomainObjects.State;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
@@ -33,6 +34,12 @@ public class ContactCell extends VBox {
 
     public void setContact(Contact contact) {
         contactName.setText(contact.getName());
-        contactStatus.setText(contact.getState().isOnline() ? "Online" : "Offline");
+        State state = contact.getState();
+        String styleClass = (state != null && state.isOnline()) ? "online" :
+                "offline";
+        String text = (state != null && state.isOnline()) ? "Online" :
+                "Offline";
+        contactStatus.getStyleClass().add(styleClass);
+        contactStatus.setText(text);
     }
 }

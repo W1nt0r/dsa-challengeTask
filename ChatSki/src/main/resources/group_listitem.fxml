@@ -3,9 +3,14 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<fx:root type="javafx.scene.layout.VBox" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml">
-    <Label fx:id="groupName"/>
+<fx:root type="javafx.scene.layout.VBox"
+         xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         styleClass="collocutor-root">
+    <Label fx:id="groupName"
+           styleClass="collocutor-name"/>
     <VBox>
-        <Label fx:id="members"></Label>
+        <Label fx:id="members"
+               styleClass="collocutor-extensions"/>
     </VBox>
 </fx:root>

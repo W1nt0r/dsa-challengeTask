@@ -32,6 +32,7 @@ public class Message implements Serializable, ITransmittable, IMessage {
         listener.receiveMessageConfirmation(receiver, this);
     }
 
+    @Override
     public String getMessage() {
         return message;
     }

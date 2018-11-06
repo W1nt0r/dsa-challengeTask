@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import java.net.URL?>
+
+<fx:root type="javafx.scene.layout.HBox"
+         xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         styleClass="message">
+    <VBox>
+        <Label fx:id="sender"/>
+        <Label fx:id="text"/>
+    </VBox>
+    <stylesheets>
+        <URL value="@chat_window.css"/>
+    </stylesheets>
+</fx:root>

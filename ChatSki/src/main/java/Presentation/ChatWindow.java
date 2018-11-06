@@ -1,8 +1,10 @@
 package Presentation;
 
-import DomainObjects.*;
+import DomainObjects.BootstrapInformation;
+import DomainObjects.Contact;
 import DomainObjects.Interfaces.ICollocutor;
 import DomainObjects.Interfaces.IMessage;
+import DomainObjects.State;
 import Domainlogic.BootstrapManager;
 import Domainlogic.ContactManager;
 import Domainlogic.Exceptions.NetworkJoinException;
@@ -17,54 +19,53 @@ import Service.PortFinder;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.Background;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.Comparator;
 import java.util.List;
 
 
 public class ChatWindow extends Application {
 
+    private final static String SHUTDOWN_STATE = "shutdown-state";
+    private final static String STARTUP_STATE = "startup-state";
+
+    private ChatWindowController controller;
+    private Stage stage;
+    private Scene currentScene;
+    private ObservableList<ICollocutor> collocutorItems;
+    private ObservableList<IMessage> messages;
+    private ContactManager contactManager;
+    private MessageManager messageManager;
+    private ChatWindowListener chatWindowListener;
+    private ICollocutor activeChat;
+
     public static void main(String[] args) {
         launch(args);
     }
 
-    private final static String SHUTDOWN_STATE = "shutdown-state";
-    private final static String STARTUP_STATE = "startup-state";
-
-    private Stage stage;
-    private BorderPane rootBorderPane = new BorderPane();
-    private ListView<ICollocutor> contactTable = new ListView<>();
-    private ListView<IMessage> messageListView = new ListView<>();
-    private Button sendButton = new Button("Send");
-    private Button addGroupButton = new Button("Add Group");
-    private Button addContactButton = new Button("Add Contact");
-    private TextField messageField = new TextField();
-    private ChatWindowListener chatWindowListener =
-            new ChatWindowListener(this);
-
-    private ObservableList<ICollocutor> contactItems = FXCollections.observableArrayList();
-    private ObservableList<IMessage> messages = FXCollections.observableArrayList();
-    private ContactManager contactManager;
-    private MessageManager messageManager;
-    private ICollocutor activeChat;
-
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-
-        rootBorderPane.setPadding(new Insets(10));
+        collocutorItems = FXCollections.observableArrayList();
+        messages = FXCollections.observableArrayList();
+        chatWindowListener = new ChatWindowListener(this);
 
         boolean initialized = false;
         try {
@@ -77,35 +78,59 @@ public class ChatWindow extends Application {
             return;
         }
 
-        initLeftPane();
-        initRightPane();
-        initTopPane();
-
-        Scene scene = new Scene(rootBorderPane, 600, 400);
-        stage.setResizable(false);
-        stage.setTitle("ChatSki - " + contactManager.getOwnContact().getName());
-        stage.setScene(scene);
+        initStage();
+        loadKnownContacts();
+        stage.show();
         stage.setOnCloseRequest(e -> {
             showShutDown();
             e.consume();
         });
-        stage.show();
     }
 
-    private void clearRootBorderPane() {
-        rootBorderPane.setTop(null);
-        rootBorderPane.setLeft(null);
-        rootBorderPane.setBottom(null);
-        rootBorderPane.setRight(null);
-        rootBorderPane.setCenter(null);
+    private void initStage() {
+        Parent root;
+        try {
+            URL resource = getClass().getClassLoader().getResource("chat_window.fxml");
+            if (resource != null) {
+                FXMLLoader loader = new FXMLLoader(resource);
+                root = loader.load();
+                controller = loader.getController();
+
+                currentScene = new Scene(root);
+                stage.setScene(currentScene);
+                stage.setTitle("ChatSki - " + contactManager.getOwnContact().getName());
+                controller.getMessageSendButton().setOnAction(e -> sendMessage());
+                controller.getAddContactButton().setOnAction(e -> addContact());
+                controller.getAddGroupButton().setOnAction(e -> addGroup());
+                controller.getMessageField().setOnKeyPressed(event -> {
+                    if (event.getCode().equals(KeyCode.ENTER)) {
+                        sendMessage();
+                    }
+                });
+                controller.getCollocutorView().getSelectionModel()
+                        .selectedItemProperty().addListener((observable, oldSelected, newSelected) -> showConversation(newSelected));
+                controller.getCollocutorView().setItems(collocutorItems);
+                controller.getMessageView().setItems(messages);
+                controller.getCollocutorView().setCellFactory(new ContactCellFactory());
+                controller.getMessageView().setCellFactory(new MessageCellFactory(contactManager.getOwnContact()));
+            } else {
+                throw new FileNotFoundException("chat_window.fxml not found");
+            }
+        } catch (IOException e) {
+            showThrowable(e);
+        }
     }
 
     private void showShutDown() {
-        clearRootBorderPane();
-        Label shutDownLabel = new Label("Shutting down...");
-        shutDownLabel.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 18));
-        rootBorderPane.setCenter(shutDownLabel);
-
+        BorderPane pane = new BorderPane();
+        pane.setBackground(Background.EMPTY);
+        Label shuttingDown = new Label("Shutting down...");
+        shuttingDown.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 24));
+        pane.setCenter(shuttingDown);
+        double height = currentScene.getHeight();
+        double width = currentScene.getWidth();
+        currentScene = new Scene(pane, width, height);
+        stage.setScene(currentScene);
         try {
             contactManager.writeOwnStateToDHT(SHUTDOWN_STATE, false);
         } catch (PeerNotInitializedException | ReplicationException e) {
@@ -131,7 +156,6 @@ public class ChatWindow extends Application {
         }
         messageManager = new MessageManager(chatWindowListener, chatWindowListener,
                 contactManager);
-        loadKnownContacts();
         contactManager.updateStates();
 
         initializeActiveChat();
@@ -251,73 +275,10 @@ public class ChatWindow extends Application {
     }
 
     private void loadKnownContacts() {
-        contactItems.clear();
-
-//        TableColumn<Contact, String> nameCol = new TableColumn<>("Name");
-//        nameCol.setCellValueFactory(new PropertyValueFactory<>("Name"));
-//        TableColumn<Contact, Boolean> onlineCol = new TableColumn<>("isOnline");
-//        onlineCol.setCellValueFactory(new PropertyValueFactory<>("Online"));
-//
-//        TableColumn<Contact, String> ipCol = new TableColumn<>("IP");
-//        ipCol.setCellValueFactory(new PropertyValueFactory<>("Ip"));
-
-        contactItems.addAll(contactManager.getCollocutors());
-
-//        contactTable = new TableView<>();
-//        contactTable.getColumns().add(nameCol);
-//        contactTable.getColumns().add(onlineCol);
-//        contactTable.getColumns().add(ipCol);
-        contactTable.setItems(contactItems);
-    }
-
-    private void initTopPane() {
-        BorderPane topBorderPane = new BorderPane();
-        topBorderPane.setLeft(new Label("Messages"));
-        topBorderPane.setRight(new Label("Contacts & Groups"));
-        rootBorderPane.setTop(topBorderPane);
-    }
-
-    private void initLeftPane() {
-        messageListView.setItems(messages);
-        sendButton.setOnMouseClicked((event) -> sendMessage());
-        addContactButton.setOnAction((event) -> addContact());
-        addGroupButton.setOnAction((event) -> addGroup());
-
-        messageField.setOnKeyPressed(event -> {
-            if (event.getCode().equals(KeyCode.ENTER)) {
-                sendMessage();
-            }
-        });
-
-        BorderPane leftBottomPane = new BorderPane();
-        leftBottomPane.setRight(sendButton);
-        leftBottomPane.setLeft(messageField);
-
-        BorderPane borderPane = new BorderPane();
-        borderPane.setPadding(new Insets(10));
-        borderPane.setCenter(messageListView);
-        borderPane.setBottom(leftBottomPane);
-
-        rootBorderPane.setLeft(borderPane);
-    }
-
-    private void initRightPane() {
-        HBox rightBottomPane = new HBox(10);
-        rightBottomPane.setAlignment(Pos.BOTTOM_RIGHT);
-        rightBottomPane.getChildren().add(addGroupButton);
-        rightBottomPane.getChildren().add(addContactButton);
-
-        BorderPane borderPane = new BorderPane();
-        borderPane.setPadding(new Insets(10));
-        borderPane.setCenter(contactTable);
-        borderPane.setBottom(rightBottomPane);
-
-        rootBorderPane.setRight(borderPane);
-
-        contactTable.getSelectionModel().selectedItemProperty()
-                .addListener((observable, oldSelected, newSelected) -> showConversation(newSelected));
-
-        contactTable.setCellFactory(new ContactCellFactory());
+        collocutorItems.clear();
+        List<ICollocutor> collocutors = contactManager.getCollocutors();
+        collocutors.sort(Comparator.comparing(c -> c.getName().toLowerCase()));
+        collocutorItems.addAll(collocutors);
     }
 
     private void showConversation(ICollocutor collocutor) {
@@ -328,14 +289,15 @@ public class ChatWindow extends Application {
             String username = collocutor.getName();
             List<IMessage> conversation = messageManager.getChatHistory(username);
             messages.addAll(conversation);
+            controller.getCollocutorName().setText(username);
         }
     }
 
     private void sendMessage() {
         try {
             if (activeChat != null) {
-                String messageText = messageField.getText();
-                messageField.clear();
+                String messageText = controller.getMessageField().getText();
+                controller.getMessageField().clear();
                 activeChat.sendMessage(messageText, messageManager);
             } else {
                 showInformation("No Contacts chosen", "Please chose a " +

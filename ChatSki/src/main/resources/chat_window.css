@@ -1,0 +1,196 @@
+.root {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 16;
+    -fx-background-color: "#DDDDDD"
+}
+
+.top-header {
+    -fx-pref-height: 56;
+    -fx-font-size: 1.5em;
+    -fx-background-color: "#0065A3";
+    -fx-padding: 0 16;
+}
+
+.top-header Label {
+    -fx-text-fill: "#FFFFFF";
+    -fx-font-weight: 100;
+}
+
+.top-header HBox {
+    -fx-alignment: center-left;
+}
+
+.new-message {
+    -fx-padding: 8;
+    -fx-spacing: 8;
+}
+
+.collocutor-root {
+    -fx-pref-height: 64;
+    -fx-padding: 16;
+}
+
+.collocutor-name {
+    -fx-font-size: 16;
+    -fx-text-fill: "#000000DE";
+}
+
+.collocutor-extensions {
+    -fx-font-size: 14;
+    -fx-text-fill: "#00000099";
+}
+
+#messageView, #collocutorView {
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-focus-color: "#000000";
+    -fx-selection-bar-text: red;
+}
+
+#collocutorView .list-cell {
+    -fx-background-color: "#FFFFFF";
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+#collocutorView .list-cell:empty:hover {
+    -fx-background-color: "#FFFFFF";
+    -fx-cursor: default;
+}
+
+#collocutorView .list-cell:hover {
+    -fx-background-color: "#9C9908";
+}
+
+.empty .list-cell {
+    -fx-background-color: "#000000";
+}
+
+#collocutorView .list-cell:selected, #collocutorView .list-cell:selected:hover, #collocutorView .list-cell:selected:pressed {
+    -fx-background-color: "#BDBA13";
+}
+
+#collocutorView .list-cell:selected .collocutor-name, #collocutorView .list-cell:hover .collocutor-name {
+    -fx-text-fill: "#FFFFFF";
+}
+
+#collocutorView .list-cell:selected .collocutor-extensions, #collocutorView .list-cell:hover .collocutor-extensions {
+    -fx-text-fill: "#EEEEEE";
+}
+
+#contactStatus.offline {
+    -fx-font-size: 14;
+    -fx-text-fill: "#FF0000";
+}
+
+#contactStatus.online {
+    -fx-font-size: 14;
+    -fx-text-fill: "#00AA00";
+}
+
+.message VBox {
+    -fx-padding: 12;
+}
+
+.message #text {
+    -fx-wrap-text: true;
+}
+
+.own-message {
+    -fx-alignment: center-right;
+}
+
+.other-message {
+    -fx-alignment: center-left;
+}
+
+.own-message VBox {
+    -fx-background-color: "#009EFF";
+    -fx-background-radius: 12 0 12 12;
+}
+
+.other-message VBox {
+    -fx-background-color: "#DDDDDD";
+    -fx-background-radius: 0 12 12 12;
+}
+
+.message #sender {
+    -fx-font-size: 12;
+    -fx-padding: 0 0 4 0;
+}
+
+.own-message Label, #messageView .list-cell:selected.own-message Label {
+    -fx-text-fill: "#FFFFFF";
+}
+
+.other-message #text, #messageView .list-cell:selected.other-message #text {
+    -fx-text-fill: "#000000DE";
+}
+
+.message #sender, #messageView .list-cell:selected.message #sender {
+    -fx-text-fill: "#00000099";
+}
+
+Button {
+    -fx-cursor: hand;
+}
+
+.outline-button {
+    -fx-background-color: "#9C9908";
+    -fx-background-radius: 4;
+    -fx-pref-height: 36;
+    -fx-min-width: 64;
+    -fx-padding: 0 16;
+    -fx-font-size: 14;
+    -fx-text-fill: "#FFFFFF";
+    -fx-effect: dropshadow(three-pass-box, #AAAAAA, 0, 0, 0, 1);
+}
+
+.outline-button SVGPath {
+    -fx-fill: "#FFFFFF";
+}
+
+.outline-button:hover, .outline-button:focused {
+    -fx-background-color: "#BDBA13";
+}
+
+.outline-button:pressed {
+    -fx-effect: dropshadow(three-pass-box, #AAAAAA, 0, 0, 0, 0);
+}
+
+.icon-button {
+    -fx-border-width: 0;
+    -fx-background-color: transparent;
+    -fx-padding: 12;
+}
+
+.icon-button SVGPath {
+    -fx-fill: "#FFFFFF";
+}
+
+.icon-button:focused SVGPath, .icon-button:hover SVGPath {
+     -fx-fill: "#BDBA13";
+}
+
+.icon-button:pressed SVGPath {
+     -fx-fill: "#9C9908";
+}
+
+#messageField {
+    -fx-background-insets: 1;
+    -fx-background-radius: 4;
+    -fx-border-width: 1;
+    -fx-border-color: "#999999";
+    -fx-border-radius: 4;
+    -fx-pref-height: 36;
+    -fx-font-size: 14;
+}
+
+#messageField:hover {
+    -fx-border-color: "#BDBA13";
+}
+
+#messageField:focused {
+    -fx-border-width: 2;
+    -fx-border-color: "#BDBA13";
+}
