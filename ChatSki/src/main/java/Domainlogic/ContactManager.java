@@ -151,7 +151,7 @@ public class ContactManager {
 
     private void saveGroupList() throws DataSaveException {
 //        DataSaver<HashMap<String, Group>> saver =
-//                new DataSaver<>(CONTACT_LIST_FILE);
+//                new DataSaver<>(GROUP_LIST_FILE);
 //        saver.saveData(groupList);
     }
 }
