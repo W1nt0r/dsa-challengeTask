@@ -10,6 +10,9 @@ sourceCompatibility = 1.8
 repositories {
     mavenCentral()
     maven {
+        url "https://dl.bintray.com/ethereum/maven/"
+    }
+    maven {
         url "http://tomp2p.net/dev/mvn/"
     }
 }
@@ -45,4 +48,5 @@ task bootstrapJar(type: Jar) {
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     compile group: 'net.tomp2p' , name: 'tomp2p-all', version: '5.0-Beta8'
+    compile 'io.iconator:testonator:1.0.28'
 }
