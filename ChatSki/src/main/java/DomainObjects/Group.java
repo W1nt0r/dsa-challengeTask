@@ -1,7 +1,9 @@
 package DomainObjects;
 
+import DomainObjects.Exceptions.NotSupportedException;
 import DomainObjects.Interfaces.ICollocutor;
 import DomainObjects.Interfaces.IMessageSender;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -53,5 +55,11 @@ public class Group implements Serializable, ICollocutor {
     @Override
     public void sendMessage(String message, IMessageSender sender) {
         sender.sendGroupMessage(this, message);
+    }
+
+    @Override
+    public void sendNotaryMessage(String message, IMessageSender sender) {
+        throw new NotSupportedException("Notary Messages can't be sent to " +
+                "groups");
     }
 }

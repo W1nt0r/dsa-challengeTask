@@ -2,6 +2,7 @@ package Presentation;
 
 import DomainObjects.Contact;
 import DomainObjects.Interfaces.*;
+import DomainObjects.NotaryMessage;
 import javafx.application.Platform;
 
 public class ChatWindowListener implements IMessageTransmitter,
@@ -11,6 +12,18 @@ public class ChatWindowListener implements IMessageTransmitter,
 
     public ChatWindowListener(ChatWindow chatWindow){
         this.chatWindow = chatWindow;
+    }
+
+    @Override
+    public void receiveNotaryMessage(Contact sender, NotaryMessage message) {
+        Platform.runLater(() -> chatWindow.showNotaryMessage(sender, message));
+    }
+
+    @Override
+    public void receiveNotaryMessageResponse(Contact sender,
+                                             NotaryMessage message) {
+        Platform.runLater(() -> chatWindow.showNotaryMessageResponse(sender,
+                message));
     }
 
     @Override

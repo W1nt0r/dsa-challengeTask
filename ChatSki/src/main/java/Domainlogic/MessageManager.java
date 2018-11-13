@@ -53,6 +53,14 @@ public class MessageManager implements IMessageListener, IMessageSender {
         send(receiverContact, request, this::receiveThrowable);
     }
 
+    public synchronized void sendNotaryMessageResponse(Contact receiver,
+            NotaryMessage message, boolean accepted) throws PeerNotInitializedException {
+        NotaryMessageResponse msg = new NotaryMessageResponse(
+                contactManager.getOwnContact(), message);
+
+        send(receiver, msg, this::receiveThrowable);
+    }
+
     public synchronized void sendGroupCreation(String groupName,
                                                Set<Contact> members) {
         Contact ownContact = contactManager.getOwnContact();
@@ -80,6 +88,17 @@ public class MessageManager implements IMessageListener, IMessageSender {
     @Override
     public synchronized void sendMessage(Contact receiver, String message) {
         Message msg = new Message(contactManager.getOwnContact(), message);
+        try {
+            send(receiver, msg, this::receiveThrowable);
+        } catch (PeerNotInitializedException e) {
+            messageTransmitter.showThrowable(e);
+        }
+    }
+
+    @Override
+    public void sendNotaryMessage(Contact receiver, String message) {
+        NotaryMessage msg =
+                new NotaryMessage(contactManager.getOwnContact(), message);
         try {
             send(receiver, msg, this::receiveThrowable);
         } catch (PeerNotInitializedException e) {
@@ -153,6 +172,19 @@ public class MessageManager implements IMessageListener, IMessageSender {
     }
 
     @Override
+    public void receiveNotaryMessage(Contact sender, NotaryMessage message) {
+        appendMessageToChatSequence(sender, message);
+        messageTransmitter.messagesUpdated(sender);
+        messageTransmitter.receiveNotaryMessage(sender, message);
+    }
+
+    @Override
+    public void receiveNotaryMessageResponse(Contact sender,
+                                             NotaryMessage message) {
+        messageTransmitter.receiveNotaryMessageResponse(sender, message);
+    }
+
+    @Override
     public synchronized void receiveContactRequest(Contact sender) {
         messageTransmitter.receiveContactRequest(sender);
     }
@@ -185,6 +217,12 @@ public class MessageManager implements IMessageListener, IMessageSender {
     @Override
     public synchronized void receiveMessageConfirmation(Contact receiver,
                                                         Message message) {
+        appendMessageToChatSequence(receiver, message);
+    }
+
+    @Override
+    public void receiveNotaryMessageConfirmation(Contact receiver,
+                                                 NotaryMessage message) {
         appendMessageToChatSequence(receiver, message);
     }
 

@@ -26,6 +26,9 @@ public class ChatWindowController {
     private Button messageSendButton;
 
     @FXML
+    private Button notaryMessageSendButton;
+
+    @FXML
     private Button addContactButton;
 
     @FXML
@@ -53,6 +56,10 @@ public class ChatWindowController {
 
     public Button getMessageSendButton() {
         return messageSendButton;
+    }
+
+    public Button getNotaryMessageSendButton() {
+        return notaryMessageSendButton;
     }
 
     public Button getAddContactButton() {

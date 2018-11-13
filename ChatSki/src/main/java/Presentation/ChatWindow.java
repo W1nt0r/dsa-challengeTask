@@ -4,6 +4,7 @@ import DomainObjects.BootstrapInformation;
 import DomainObjects.Contact;
 import DomainObjects.Interfaces.ICollocutor;
 import DomainObjects.Interfaces.IMessage;
+import DomainObjects.NotaryMessage;
 import DomainObjects.State;
 import Domainlogic.BootstrapManager;
 import Domainlogic.ContactManager;
@@ -101,6 +102,7 @@ public class ChatWindow extends Application {
                 stage.setScene(currentScene);
                 stage.setTitle("ChatSki - " + contactManager.getOwnContact().getName());
                 controller.getMessageSendButton().setOnAction(e -> sendMessage());
+                controller.getNotaryMessageSendButton().setOnAction(e -> sendNotaryMessage());
                 controller.getAddContactButton().setOnAction(e -> addContact());
                 controller.getAddGroupButton().setOnAction(e -> addGroup());
                 controller.getMessageField().setOnKeyPressed(event -> {
@@ -259,6 +261,25 @@ public class ChatWindow extends Application {
         return true;
     }
 
+    public void showNotaryMessage(Contact sender, NotaryMessage message) {
+        Form form = new Form("Notary Message", sender.getName() + " sent you" +
+                " the notary-message\n" + message.getMessage(),
+                FormType.DECISION);
+        form.setOwner(currentScene);
+        boolean accepted = form.showAndWait();
+        try {
+            messageManager.sendNotaryMessageResponse(sender, message, accepted);
+        } catch (PeerNotInitializedException e) {
+            showThrowable(e);
+        }
+    }
+
+    public void showNotaryMessageResponse(Contact sender,
+                                          NotaryMessage message) {
+        showInformation("Notary-Message", sender.getName() + " answered your " +
+                "notary-message " + message.getMessage());
+    }
+
     public void showContactRequest(Contact sender) {
         Form form = new Form("Contact-Request", sender.getName() + " sent you" +
                 " a contact-request", FormType.DECISION);
@@ -298,7 +319,9 @@ public class ChatWindow extends Application {
             List<IMessage> conversation =
                     messageManager.getChatHistory(collocutor);
             messages.addAll(conversation);
-            controller.getMessageView().scrollTo(conversation.get(conversation.size() - 1));
+            if (conversation.size() >= 1) {
+                controller.getMessageView().scrollTo(conversation.get(conversation.size() - 1));
+            }
             controller.getCollocutorName().setText(collocutor.getName());
         }
     }
@@ -307,8 +330,23 @@ public class ChatWindow extends Application {
         try {
             if (activeChat != null) {
                 String messageText = controller.getMessageField().getText();
-                controller.getMessageField().clear();
                 activeChat.sendMessage(messageText, messageManager);
+                controller.getMessageField().clear();
+            } else {
+                showInformation("No Contacts chosen", "Please chose a " +
+                        "contact or add a new one.");
+            }
+        } catch (Exception ex) {
+            showThrowable(ex);
+        }
+    }
+
+    private void sendNotaryMessage() {
+        try {
+            if (activeChat != null) {
+                String messageText = controller.getMessageField().getText();
+                activeChat.sendNotaryMessage(messageText, messageManager);
+                controller.getMessageField().clear();
             } else {
                 showInformation("No Contacts chosen", "Please chose a " +
                         "contact or add a new one.");
@@ -320,6 +358,7 @@ public class ChatWindow extends Application {
 
     private void addGroup() {
         GroupSelectionForm form = new GroupSelectionForm("Add group", contactManager.getContactList());
+        form.setOwner(currentScene);
         if (form.showAndWait()) {
             messageManager.sendGroupCreation(form.getGroupName(), form.getGroupMembers());
             loadKnownContacts();

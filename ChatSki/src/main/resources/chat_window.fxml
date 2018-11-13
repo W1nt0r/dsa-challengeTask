@@ -2,10 +2,8 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-
-<?import java.net.URL?>
 <?import javafx.scene.shape.SVGPath?>
-
+<?import java.net.URL?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="Presentation.ChatWindowController"
@@ -42,6 +40,16 @@
                             </tooltip>
                             <graphic>
                                 <SVGPath content="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                            </graphic>
+                        </Button>
+                        <Button fx:id="notaryMessageSendButton"
+                                styleClass="outline-button">
+                            <tooltip>
+                                <Tooltip text="Send notary message"/>
+                            </tooltip>
+                            <graphic>
+                                <SVGPath content="M1 21h12v2H1zM5.245 8.07l2.83-2.827 14.14 14.142-2.828 2.828zM12.317
+                                1l5.657 5.656-2.83 2.83-5.654-5.66zM3.825 9.485l5.657 5.657-2.828 2.828-5.657-5.657z"/>
                             </graphic>
                         </Button>
                     </HBox>

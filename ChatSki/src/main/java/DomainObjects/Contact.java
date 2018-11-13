@@ -63,4 +63,9 @@ public class Contact implements Serializable, ICollocutor {
     public void sendMessage(String message, IMessageSender sender) {
         sender.sendMessage(this, message);
     }
+
+    @Override
+    public void sendNotaryMessage(String message, IMessageSender sender) {
+        sender.sendNotaryMessage(this, message);
+    }
 }
