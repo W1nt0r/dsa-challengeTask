@@ -20,6 +20,28 @@ jar {
     }
 }
 
+task chatWindowJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'ChatSki ChatWindow',
+                'Implementation-Version': version,
+                'Main-Class': 'Presentation.ChatWindow'
+    }
+    baseName = project.name + '-ChatWindow'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+task bootstrapJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'ChatSki Bootstrap',
+                'Implementation-Version': version,
+                'Main-Class': 'Service.Bootstrap'
+    }
+    baseName = project.name + '-Bootstrap'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     compile group: 'net.tomp2p' , name: 'tomp2p-all', version: '5.0-Beta8'
