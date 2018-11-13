@@ -10,6 +10,9 @@ sourceCompatibility = 1.8
 repositories {
     mavenCentral()
     maven {
+        url "https://dl.bintray.com/ethereum/maven/"
+    }
+    maven {
         url "http://tomp2p.net/dev/mvn/"
     }
 }
