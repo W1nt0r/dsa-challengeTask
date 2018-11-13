@@ -6,6 +6,7 @@ import Domainlogic.Exceptions.SendFailedException;
 import Service.Exceptions.DataSaveException;
 import Service.Exceptions.PeerNotInitializedException;
 import Service.Exceptions.ReplicationException;
+import Service.NotaryService;
 import Service.PeerCommunicator;
 import Service.StateService;
 
@@ -57,7 +58,9 @@ public class MessageManager implements IMessageListener, IMessageSender {
             NotaryMessage message, boolean accepted) throws PeerNotInitializedException {
         NotaryMessageResponse msg = new NotaryMessageResponse(
                 contactManager.getOwnContact(), message);
-
+        if(accepted){
+            NotaryService.notarizeMessage(message);
+        }
         send(receiver, msg, this::receiveThrowable);
     }
 
