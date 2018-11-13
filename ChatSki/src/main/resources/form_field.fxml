@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.geometry.Insets?>
+<fx:root type="javafx.scene.layout.StackPane"
+         xmlns:fx="http://javafx.com/fxml"
+         styleClass="form-field">
+    <VBox styleClass="form-field-box">
+        <TextField fx:id="textField"
+                   styleClass="form-field-text"/>
+    </VBox>
+    <Label fx:id="label"
+           StackPane.alignment="TOP_LEFT"
+           styleClass="form-field-label">
+        <StackPane.margin>
+            <Insets left="10"/>
+        </StackPane.margin>
+    </Label>
+    <Label fx:id="error"
+           StackPane.alignment="BOTTOM_LEFT"
+           styleClass="form-field-error">
+        <StackPane.margin>
+            <Insets left="10"/>
+        </StackPane.margin>
+    </Label>
+</fx:root>

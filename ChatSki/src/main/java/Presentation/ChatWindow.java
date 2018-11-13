@@ -75,6 +75,7 @@ public class ChatWindow extends Application {
         }
 
         if (!initialized) {
+            close();
             return;
         }
 
@@ -211,6 +212,9 @@ public class ChatWindow extends Application {
         Form form = new Form("Bootstrap-Information", "Please enter the " +
                 "Bootstrap information", FormType.SEND);
         form.addField("ip", "IP-Address", oldIp, s -> {
+            if (s.trim().isEmpty()) {
+                return false;
+            }
             try {
                 InetAddress.getByName(s);
                 return true;
@@ -258,6 +262,7 @@ public class ChatWindow extends Application {
     public void showContactRequest(Contact sender) {
         Form form = new Form("Contact-Request", sender.getName() + " sent you" +
                 " a contact-request", FormType.DECISION);
+        form.setOwner(currentScene);
         boolean accepted = form.showAndWait();
         try {
             messageManager.sendContactResponse(sender, accepted);
@@ -324,6 +329,7 @@ public class ChatWindow extends Application {
     private void addContact() {
         Form newForm = new Form("Add Contact", "Please enter the username of " +
                 "the contact", FormType.SEND);
+        newForm.setOwner(currentScene);
         newForm.addField("username", "username", s -> !s.trim().isEmpty(),
                 "Username must not be empty");
         boolean result = newForm.showAndWait();
@@ -363,6 +369,7 @@ public class ChatWindow extends Application {
 
     private void showInformation(String title, String message) {
         Form form = new Form(title, message, FormType.OK);
+        form.setOwner(currentScene);
         form.showAndWait();
     }
 }

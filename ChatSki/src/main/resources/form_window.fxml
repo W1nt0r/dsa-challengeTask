@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+
+<?import java.net.URL?>
+<?import javafx.scene.control.Button?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="Presentation.FormController"
+      styleClass="root,form">
+    <VBox fx:id="mainPane">
+    </VBox>
+    <HBox styleClass="button-pane">
+        <Button fx:id="okButton"
+                styleClass="outline-button"
+                text="OK"/>
+        <Button fx:id="sendButton"
+                styleClass="outline-button"
+                text="Send"/>
+        <Button fx:id="acceptButton"
+                styleClass="outline-button"
+                text="Accept"/>
+        <Button fx:id="rejectButton"
+                styleClass="outline-button"
+                text="Reject"/>
+    </HBox>
+    <stylesheets>
+        <URL value="@chat_window.css"/>
+    </stylesheets>
+</VBox>

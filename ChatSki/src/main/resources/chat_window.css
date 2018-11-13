@@ -1,7 +1,17 @@
+* {
+    -fx-main-background: "#FFFFFF";
+    -fx-color-error: "#B00020";
+}
+
 .root {
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-font-size: 16;
     -fx-background-color: "#DDDDDD"
+}
+
+.root.form {
+    -fx-background-color: "#FFFFFF";
+    -fx-padding: 8;
 }
 
 .top-header {
@@ -20,9 +30,13 @@
     -fx-alignment: center-left;
 }
 
-.new-message {
+#mainPane, .new-message, .button-pane {
     -fx-padding: 8;
     -fx-spacing: 8;
+}
+
+.jfx-text-field {
+    -fx-prompt-text-fill: #000000;
 }
 
 .collocutor-root {
@@ -53,7 +67,7 @@
     -fx-cursor: hand;
 }
 
-#collocutorView .list-cell:empty:hover {
+#collocutorView .list-cell:empty, #collocutorView .list-cell:empty:hover {
     -fx-background-color: "#FFFFFF";
     -fx-cursor: default;
 }
@@ -66,11 +80,11 @@
     -fx-background-color: "#000000";
 }
 
-#collocutorView .list-cell:selected, #collocutorView .list-cell:selected:hover, #collocutorView .list-cell:selected:pressed {
+#collocutorView .list-cell:selected, #collocutorView .list-cell:selected:hover, #collocutorView .list-cell:selected:pressed, .contact-selection .contact-list .list-cell:selected {
     -fx-background-color: "#BDBA13";
 }
 
-#collocutorView .list-cell:selected .collocutor-name, #collocutorView .list-cell:hover .collocutor-name {
+#collocutorView .list-cell:selected .collocutor-name, #collocutorView .list-cell:hover .collocutor-name, .contact-list .list-cell:selected {
     -fx-text-fill: "#FFFFFF";
 }
 
@@ -176,7 +190,7 @@ Button {
      -fx-fill: "#9C9908";
 }
 
-#messageField {
+#messageField, .form-field-text {
     -fx-background-insets: 1;
     -fx-background-radius: 4;
     -fx-border-width: 1;
@@ -184,6 +198,8 @@ Button {
     -fx-border-radius: 4;
     -fx-pref-height: 36;
     -fx-font-size: 14;
+    -fx-background-color: #FFFFFF;
+    -fx-prompt-text-fill: #00000099;
 }
 
 #messageField:hover {
@@ -193,4 +209,91 @@ Button {
 #messageField:focused {
     -fx-border-width: 2;
     -fx-border-color: "#BDBA13";
+}
+
+.button-pane {
+    -fx-alignment: center-right;
+}
+
+.form-field .form-field-box {
+    -fx-padding: 6 0 18 0;
+    -fx-min-height: 80;
+}
+
+.form-field-text {
+    -fx-padding: 16 14;
+    -fx-font-size: 16;
+    -fx-min-width: 300;
+}
+
+.form-field-label, .form-field-error {
+    -fx-background-color: #FFFFFF;
+    -fx-font-size: 12;
+    -fx-padding: 0 4;
+    -fx-text-fill: #00000099;
+    visibility: hidden;
+}
+
+.form-field.focused .form-field-label {
+    -fx-text-fill: "#9C9908";
+    visibility: visible;
+}
+
+.form-field.focused .form-field-text {
+    -fx-prompt-text-fill: "#FFFFFF";
+    -fx-border-color: "#9C9908";
+    -fx-border-width: 2;
+    -fx-padding: 15 13;
+}
+
+.contact-selection .contact-list {
+    -fx-background-insets: 0;
+    -fx-background-radius: 4;
+    -fx-padding: 1;
+    -fx-border-width: 1;
+    -fx-border-color: "#999999";
+    -fx-border-radius: 4;
+}
+
+.contact-selection.focused .contact-list {
+    -fx-border-color: "#9C9908";
+    -fx-border-width: 2;
+    -fx-padding: 0;
+}
+
+.contact-selection .contact-list .list-cell {
+    -fx-background-color: "#FFFFFF";
+    -fx-cursor: hand;
+    -fx-padding: 8 16;
+    -fx-text-fill: #000000de;
+}
+
+.contact-selection .contact-list .list-cell:empty {
+    -fx-cursor: default;
+}
+
+.form-field.error .form-field-label, .form-field.focused.error .form-field-label {
+    -fx-text-fill: -fx-color-error;
+    visibility: visible;
+}
+
+.form-field.error .form-field-label, .form-field.error .form-field-error, .contact-selection.error .form-field-error {
+    -fx-text-fill: -fx-color-error;
+    visibility: visible;
+}
+
+.form-field.error .form-field-text, .form-field.focused.error .form-field-text {
+    -fx-prompt-text-fill: "#FFFFFF";
+    -fx-border-color: -fx-color-error;
+    -fx-border-width: 2;
+    -fx-padding: 15 13;
+}
+
+.form-field.error .form-field-error {
+    visibility: visible;
+    -fx-text-fill: -fx-color-error;
+}
+
+.title {
+    -fx-padding: 0 0 16 0;
 }
