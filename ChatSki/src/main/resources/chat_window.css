@@ -102,12 +102,25 @@
     -fx-text-fill: "#00AA00";
 }
 
-.message VBox {
+.message .message-container {
     -fx-padding: 12;
 }
 
 .message #text {
     -fx-wrap-text: true;
+}
+
+.message .notary-icon {
+    -fx-font-size: 0;
+    visibility: hidden;
+}
+
+.message.acknowledged .notary-icon {
+    visibility: visible;
+}
+
+.message.acknowledged #text {
+    -fx-padding: 0 24 0 0;
 }
 
 .own-message {
@@ -118,12 +131,12 @@
     -fx-alignment: center-left;
 }
 
-.own-message VBox {
+.own-message .message-container {
     -fx-background-color: "#009EFF";
     -fx-background-radius: 12 0 12 12;
 }
 
-.other-message VBox {
+.other-message .message-container {
     -fx-background-color: "#DDDDDD";
     -fx-background-radius: 0 12 12 12;
 }
@@ -139,6 +152,14 @@
 
 .other-message #text, #messageView .list-cell:selected.other-message #text {
     -fx-text-fill: "#000000DE";
+}
+
+.own-message SVGPath {
+    -fx-fill: "#FFFFFF";
+}
+
+.other-message SVGPath {
+    -fx-fill: "#000000DE";
 }
 
 .message #sender, #messageView .list-cell:selected.message #sender {

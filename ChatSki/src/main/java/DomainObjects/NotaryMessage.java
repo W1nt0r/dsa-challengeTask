@@ -5,20 +5,27 @@ import DomainObjects.Interfaces.IMessageListener;
 import DomainObjects.Interfaces.ITransmittable;
 
 import java.io.Serializable;
-import java.security.Timestamp;
 import java.time.Instant;
-import java.time.LocalDate;
 
 public class NotaryMessage implements Serializable, ITransmittable, IMessage {
 
     private Contact sender;
     private String message;
     private Long timestamp;
+    private boolean acknowledged;
 
     public NotaryMessage(Contact sender, String message) {
         this.sender = sender;
         this.message = message;
         this.timestamp = Instant.now().toEpochMilli();
+    }
+
+    public void setAcknowledged(boolean acknowledged) {
+        this.acknowledged = acknowledged;
+    }
+
+    public boolean isAcknowledged() {
+        return acknowledged;
     }
 
     @Override

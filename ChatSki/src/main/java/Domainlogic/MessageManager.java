@@ -61,6 +61,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
         if(accepted){
             NotaryService.notarizeMessage(message);
         }
+        acknowledgeNotaryMessage(receiver, message);
         send(receiver, msg, this::receiveThrowable);
     }
 
@@ -99,7 +100,8 @@ public class MessageManager implements IMessageListener, IMessageSender {
     }
 
     @Override
-    public void sendNotaryMessage(Contact receiver, String message) {
+    public synchronized void sendNotaryMessage(Contact receiver,
+                                               String message) {
         NotaryMessage msg =
                 new NotaryMessage(contactManager.getOwnContact(), message);
         try {
@@ -169,21 +171,35 @@ public class MessageManager implements IMessageListener, IMessageSender {
         messageTransmitter.messagesUpdated(collocutor);
     }
 
+    private synchronized void acknowledgeNotaryMessage(ICollocutor collocutor,
+                                                       NotaryMessage message) {
+        if (isChatActive(collocutor)) {
+            List<IMessage> messages =
+                    activeChats.get(collocutor).getChatMessages();
+            int archivedMessageIndex = messages.lastIndexOf(message);
+            NotaryMessage archivedMessage = (NotaryMessage) messages.get(archivedMessageIndex);
+            archivedMessage.setAcknowledged(true);
+            messageTransmitter.messagesUpdated(collocutor);
+        }
+    }
+
     @Override
     public synchronized void receiveMessage(Contact sender, Message message) {
         appendMessageToChatSequence(sender, message);
     }
 
     @Override
-    public void receiveNotaryMessage(Contact sender, NotaryMessage message) {
+    public synchronized void receiveNotaryMessage(Contact sender,
+                                                  NotaryMessage message) {
         appendMessageToChatSequence(sender, message);
         messageTransmitter.messagesUpdated(sender);
         messageTransmitter.receiveNotaryMessage(sender, message);
     }
 
     @Override
-    public void receiveNotaryMessageResponse(Contact sender,
+    public synchronized void receiveNotaryMessageResponse(Contact sender,
                                              NotaryMessage message) {
+        acknowledgeNotaryMessage(sender, message);
         messageTransmitter.receiveNotaryMessageResponse(sender, message);
     }
 
@@ -224,7 +240,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
     }
 
     @Override
-    public void receiveNotaryMessageConfirmation(Contact receiver,
+    public synchronized void receiveNotaryMessageConfirmation(Contact receiver,
                                                  NotaryMessage message) {
         appendMessageToChatSequence(receiver, message);
     }
@@ -264,7 +280,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
     }
 
     @Override
-    public void receiveStateInformation(Contact contact) {
+    public synchronized void receiveStateInformation(Contact contact) {
         contactManager.updateWithReceivedState(contact);
     }
 }

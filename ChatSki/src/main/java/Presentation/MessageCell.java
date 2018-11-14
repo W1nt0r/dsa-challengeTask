@@ -2,6 +2,7 @@ package Presentation;
 
 import DomainObjects.GroupMessage;
 import DomainObjects.Interfaces.IMessage;
+import DomainObjects.NotaryMessage;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
@@ -14,6 +15,8 @@ import java.io.IOException;
 import java.net.URL;
 
 public class MessageCell extends HBox {
+
+    private static final String ACKNOWLEDGED_CLASS = "acknowledged";
 
     @FXML
     private Label text;
@@ -33,6 +36,10 @@ public class MessageCell extends HBox {
             getStyleClass().add(own ? "own-message" : "other-message");
             if (!(message instanceof GroupMessage) || own) {
                 sender.setManaged(false);
+            }
+            if (message instanceof NotaryMessage
+                    && ((NotaryMessage) message).isAcknowledged()) {
+                getStyleClass().add(ACKNOWLEDGED_CLASS);
             }
             text.setText(message.getMessage());
             sender.setText(message.getSender().getName());

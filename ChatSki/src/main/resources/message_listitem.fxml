@@ -1,17 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.SVGPath?>
 <?import java.net.URL?>
-
 <fx:root type="javafx.scene.layout.HBox"
          xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          styleClass="message">
-    <VBox>
-        <Label fx:id="sender"/>
-        <Label fx:id="text"/>
-    </VBox>
+    <StackPane styleClass="message-container">
+        <VBox>
+            <Label fx:id="sender"/>
+            <Label fx:id="text"/>
+        </VBox>
+        <Label styleClass="notary-icon"
+               StackPane.alignment="TOP_RIGHT">
+            <graphic>
+                <!--<div>Icons made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>-->
+                <SVGPath content="M10,4.2188C8.043,4.2188 6.4531,5.8086 6.4531,7.7617C6.4531,9.7148 8.043,11.3047 10,11.3047C11.9531,11.3047 13.543,9.7148 13.543,7.7617C13.543,5.8086 11.9531,4.2188 10,4.2188ZM10,4.2188"/>
+                <SVGPath content="M17.3789,10.1602L16.3047,7.7617L17.3789,5.3633L15.1016,4.0547L14.5625,1.4805L11.9492,1.7617L10,0L8.0508,1.7617L5.4375,1.4805L4.8945,4.0547L2.6172,5.3633L3.6914,7.7617L2.6172,10.1602L4.8945,11.4688L5.1875,12.8633L2.7578,18.0313L5.2969,18.0664L6.9375,20L9.332,14.918L10,15.5234L10.668,14.918L13.0586,20L14.7031,18.0664L17.2422,18.0313L14.8086,12.8633L15.1016,11.4688ZM10,12.4766C7.3984,12.4766 5.2852,10.3633 5.2852,7.7617C5.2852,5.1602 7.3984,3.0469 10,3.0469C12.5977,3.0469 14.7148,5.1602 14.7148,7.7617C14.7148,10.3633 12.5977,12.4766 10,12.4766ZM10,12.4766"/>
+            </graphic>
+        </Label>
+    </StackPane>
     <stylesheets>
         <URL value="@chat_window.css"/>
     </stylesheets>
