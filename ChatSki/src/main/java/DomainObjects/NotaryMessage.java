@@ -6,6 +6,7 @@ import DomainObjects.Interfaces.ITransmittable;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Objects;
 
 public class NotaryMessage implements Serializable, ITransmittable, IMessage {
 
@@ -52,5 +53,20 @@ public class NotaryMessage implements Serializable, ITransmittable, IMessage {
     @Override
     public String toString(){
         return sender.toString() + message + timestamp.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NotaryMessage that = (NotaryMessage) o;
+        return Objects.equals(sender, that.sender) &&
+                Objects.equals(message, that.message) &&
+                Objects.equals(timestamp, that.timestamp);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sender, message, timestamp);
     }
 }
