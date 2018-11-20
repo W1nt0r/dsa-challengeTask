@@ -178,7 +178,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
                     activeChats.get(collocutor).getChatMessages();
             int archivedMessageIndex = messages.lastIndexOf(message);
             NotaryMessage archivedMessage = (NotaryMessage) messages.get(archivedMessageIndex);
-            archivedMessage.setAcknowledged(true);
+            archivedMessage.setAcknowledged(NotaryService.verifyMessage(message));
             messageTransmitter.messagesUpdated(collocutor);
         }
     }
