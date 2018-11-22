@@ -107,7 +107,11 @@ public class ChatWindow extends Application {
                 controller.getAddGroupButton().setOnAction(e -> addGroup());
                 controller.getMessageField().setOnKeyPressed(event -> {
                     if (event.getCode().equals(KeyCode.ENTER)) {
-                        sendMessage();
+                        if (event.isControlDown()) {
+                            sendNotaryMessage();
+                        } else {
+                            sendMessage();
+                        }
                     }
                 });
                 controller.getCollocutorView().getSelectionModel()
@@ -328,13 +332,15 @@ public class ChatWindow extends Application {
 
     private void sendMessage() {
         try {
-            if (activeChat != null) {
+            if (activeChat == null) {
+                showInformation("No Contacts chosen", "Please chose a " +
+                        "contact or add a new one.");
+            } else if (controller.getMessageField().getText().trim().isEmpty()) {
+                showInformation("No Message", "Please enter a message.");
+            } else {
                 String messageText = controller.getMessageField().getText();
                 activeChat.sendMessage(messageText, messageManager);
                 controller.getMessageField().clear();
-            } else {
-                showInformation("No Contacts chosen", "Please chose a " +
-                        "contact or add a new one.");
             }
         } catch (Exception ex) {
             showThrowable(ex);
@@ -343,13 +349,15 @@ public class ChatWindow extends Application {
 
     private void sendNotaryMessage() {
         try {
-            if (activeChat != null) {
+            if (activeChat == null) {
+                showInformation("No Contacts chosen", "Please chose a " +
+                        "contact or add a new one.");
+            } else if (controller.getMessageField().getText().trim().isEmpty()) {
+                showInformation("No Message", "Please enter a message.");
+            } else {
                 String messageText = controller.getMessageField().getText();
                 activeChat.sendNotaryMessage(messageText, messageManager);
                 controller.getMessageField().clear();
-            } else {
-                showInformation("No Contacts chosen", "Please chose a " +
-                        "contact or add a new one.");
             }
         } catch (Exception ex) {
             showThrowable(ex);
