@@ -109,10 +109,6 @@ public class FormField extends StackPane {
         return label.textProperty();
     }
 
-    public String getError() {
-        return errorProperty().getValue();
-    }
-
     public void setError(String value) {
         errorProperty().set(value);
     }

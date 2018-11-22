@@ -3,7 +3,6 @@ package DomainObjects;
 import DomainObjects.Exceptions.NotSupportedException;
 import DomainObjects.Interfaces.ICollocutor;
 import DomainObjects.Interfaces.IMessageSender;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.Serializable;
 import java.util.Objects;

@@ -1,8 +1,8 @@
 package DomainObjects;
 
 import DomainObjects.Interfaces.IMessage;
-import DomainObjects.Interfaces.ITransmittable;
 import DomainObjects.Interfaces.IMessageListener;
+import DomainObjects.Interfaces.ITransmittable;
 
 import java.io.Serializable;
 

@@ -1,6 +1,9 @@
 package DomainObjects.Interfaces;
 
-import DomainObjects.*;
+import DomainObjects.Contact;
+import DomainObjects.GroupMessage;
+import DomainObjects.Message;
+import DomainObjects.NotaryMessage;
 
 public interface IMessageListener {
     void receiveMessage(Contact sender, Message message);

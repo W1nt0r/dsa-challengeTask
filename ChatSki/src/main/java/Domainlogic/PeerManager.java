@@ -8,7 +8,6 @@ import Service.PeerHolder;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.function.Consumer;
 
 public class PeerManager {
     public static String initializePeer(String id,

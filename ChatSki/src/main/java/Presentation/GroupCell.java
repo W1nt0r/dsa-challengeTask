@@ -1,6 +1,5 @@
 package Presentation;
 
-import DomainObjects.Contact;
 import DomainObjects.Group;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;

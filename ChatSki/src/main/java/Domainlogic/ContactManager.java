@@ -13,7 +13,9 @@ import Service.Exceptions.ReplicationException;
 import Service.StateService;
 
 import java.io.FileNotFoundException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 public class ContactManager {
 
@@ -138,7 +140,8 @@ public class ContactManager {
         }
     }
 
-    private void saveOwnContact() throws DataSaveException {
+    private void saveOwnContact() {
+        // removed for presentation
 //        DataSaver<Contact> saver = new DataSaver<>(OWN_CONTACT_FILE);
 //        saver.saveData(ownContact);
     }

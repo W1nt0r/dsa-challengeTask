@@ -6,8 +6,6 @@ import DomainObjects.Interfaces.ICollocutor;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.ListCell;
 
-import javax.swing.text.AbstractDocument;
-
 public class CollocutorCell extends ListCell<ICollocutor> {
 
     @Override
