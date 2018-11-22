@@ -55,14 +55,28 @@ public class MessageManager implements IMessageListener, IMessageSender {
     }
 
     public synchronized void sendNotaryMessageResponse(Contact receiver,
-            NotaryMessage message, boolean accepted) throws PeerNotInitializedException {
+                                                       NotaryMessage message,
+                                                       boolean accepted) throws PeerNotInitializedException {
+        if (accepted) {
+            NotaryService.notarizeMessage(message,
+                    this::notarizedMessageSuccess,
+                    this::receiveThrowable);
+        } else {
+            NotaryMessageResponse msg = new NotaryMessageResponse(
+                    contactManager.getOwnContact(), message);
+            send(receiver, msg, this::receiveThrowable);
+        }
+    }
+
+    private synchronized void notarizedMessageSuccess(NotaryMessage message) {
         NotaryMessageResponse msg = new NotaryMessageResponse(
                 contactManager.getOwnContact(), message);
-        if(accepted){
-            NotaryService.notarizeMessage(message);
+        acknowledgeNotaryMessage(message.getSender(), message);
+        try {
+            send(message.getSender(), msg, this::receiveThrowable);
+        } catch (PeerNotInitializedException e) {
+            receiveThrowable(e);
         }
-        acknowledgeNotaryMessage(receiver, message);
-        send(receiver, msg, this::receiveThrowable);
     }
 
     public synchronized void sendGroupCreation(String groupName,
@@ -80,7 +94,8 @@ public class MessageManager implements IMessageListener, IMessageSender {
         }
     }
 
-    public synchronized void updateOwnState(String stateId, boolean online) throws ReplicationException, PeerNotInitializedException {
+    public synchronized void updateOwnState(String stateId,
+                                            boolean online) throws ReplicationException, PeerNotInitializedException {
         contactManager.writeOwnStateToDHT(stateId, online);
         StateInformation stateInfo =
                 new StateInformation(contactManager.getOwnContact());
@@ -136,7 +151,8 @@ public class MessageManager implements IMessageListener, IMessageSender {
     }
 
     private synchronized void send(Contact receiver, State currentState,
-                      ITransmittable transmittable, Consumer<Throwable> onError) {
+                                   ITransmittable transmittable,
+                                   Consumer<Throwable> onError) {
         updateState(receiver, currentState);
         if (currentState == null || !currentState.isOnline()) {
             onError.accept(new SendFailedException("Peer is not online: "
@@ -161,8 +177,9 @@ public class MessageManager implements IMessageListener, IMessageSender {
         return activeChats.containsKey(collocutor);
     }
 
-    private synchronized void appendMessageToChatSequence(ICollocutor collocutor,
-                                                          IMessage message) {
+    private synchronized void appendMessageToChatSequence(
+            ICollocutor collocutor,
+            IMessage message) {
         if (!isChatActive(collocutor)) {
             activeChats.put(collocutor, new ChatSequence());
         }
@@ -173,14 +190,31 @@ public class MessageManager implements IMessageListener, IMessageSender {
 
     private synchronized void acknowledgeNotaryMessage(ICollocutor collocutor,
                                                        NotaryMessage message) {
+        acknowledgeNotaryMessage(collocutor, message, () -> {});
+    }
+
+    private synchronized void acknowledgeNotaryMessage(ICollocutor collocutor,
+                                                       NotaryMessage message,
+                                                       Runnable onFinish) {
         if (isChatActive(collocutor)) {
             List<IMessage> messages =
                     activeChats.get(collocutor).getChatMessages();
             int archivedMessageIndex = messages.lastIndexOf(message);
             NotaryMessage archivedMessage = (NotaryMessage) messages.get(archivedMessageIndex);
-            archivedMessage.setAcknowledged(NotaryService.verifyMessage(message));
-            messageTransmitter.messagesUpdated(collocutor);
+            NotaryService.verifyMessage(archivedMessage,
+                    (m, a) -> {
+                        onVerifyingSuccess(collocutor, m, a);
+                        onFinish.run();
+                    },
+                    this::receiveThrowable);
         }
+    }
+
+    private synchronized void onVerifyingSuccess(ICollocutor collocutor,
+                                                 NotaryMessage message,
+                                                 boolean accepted) {
+        message.setAcknowledged(accepted);
+        messageTransmitter.messagesUpdated(collocutor);
     }
 
     @Override
@@ -198,9 +232,9 @@ public class MessageManager implements IMessageListener, IMessageSender {
 
     @Override
     public synchronized void receiveNotaryMessageResponse(Contact sender,
-                                             NotaryMessage message) {
-        acknowledgeNotaryMessage(sender, message);
-        messageTransmitter.receiveNotaryMessageResponse(sender, message);
+                                                          NotaryMessage message) {
+        acknowledgeNotaryMessage(sender, message,
+                () -> messageTransmitter.receiveNotaryMessageResponse(sender, message));
     }
 
     @Override
@@ -241,7 +275,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
 
     @Override
     public synchronized void receiveNotaryMessageConfirmation(Contact receiver,
-                                                 NotaryMessage message) {
+                                                              NotaryMessage message) {
         appendMessageToChatSequence(receiver, message);
     }
 
@@ -266,7 +300,7 @@ public class MessageManager implements IMessageListener, IMessageSender {
 
     @Override
     public synchronized void receiveGroupMessageConfirmation(Contact receiver,
-                                                GroupMessage message) {
+                                                             GroupMessage message) {
 
     }
 
