@@ -155,6 +155,7 @@ public class ChatWindow extends Application {
 
     public void closeApplication() {
         stage.close();
+        System.exit(0);
     }
 
     private boolean initialize() throws PeerCreateException, NetworkJoinException, DataSaveException, PeerNotInitializedException, IOException, ReplicationException {
