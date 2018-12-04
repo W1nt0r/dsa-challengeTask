@@ -39,4 +39,9 @@ public class State implements Serializable {
     public void setOnline(boolean online) {
         this.online = online;
     }
+
+    @Override
+    public String toString() {
+        return "Peer: " +ip + ":" + port + ", Online: " + online;
+    }
 }

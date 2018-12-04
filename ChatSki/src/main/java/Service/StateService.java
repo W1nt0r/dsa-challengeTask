@@ -27,7 +27,7 @@ public class StateService {
                                       Consumer<String> onFinishReplication) throws PeerNotInitializedException, ReplicationException {
         final String stateKey = STATE_KEY_PREFIX + username;
         PeerDHT ownPeer = PeerHolder.getOwnPeer();
-
+        System.out.println("Write to DHT: Key: " + stateKey + ", Value: " + stateToSave);
         try {
             PutBuilder putBuilder = ownPeer.put(Number160.createHash(stateKey)).data(new Data(stateToSave));
 
@@ -57,6 +57,7 @@ public class StateService {
         final String stateKey = STATE_KEY_PREFIX + username;
         PeerDHT ownPeer = PeerHolder.getOwnPeer();
         FutureGet future = ownPeer.get(Number160.createHash(stateKey)).start();
+        System.out.println("Query for key: " + stateKey);
         future.addListener(new BaseFutureListener<FutureGet>() {
             @Override
             public void operationComplete(FutureGet future)
@@ -66,6 +67,7 @@ public class StateService {
                     onLoadState.accept(null);
                 } else {
                     onLoadState.accept((State) future.data().object());
+                    System.out.println("Got from DHT for key "+stateKey+": " + data.object());
                 }
             }
 
