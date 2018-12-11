@@ -31,6 +31,7 @@ public class NotaryService {
 
         byte[] messageHash = HashUtil.sha3(message.toString().getBytes());
         System.out.println("Put message to BlockChain: " + Numeric.toHexString(messageHash));
+        System.out.println("with wallet: " + blockChain.getCredentialAddress());
 
         Function function = new Function("notarizeMessage",
                 Collections.singletonList(new Bytes32(messageHash)),
